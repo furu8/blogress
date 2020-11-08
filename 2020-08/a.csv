@@ -1,0 +1,1 @@
+datetime,temperature(℃),pressure(hPa),relative_humidity(％),wind_speed(m/s),wind_direction(m/s),rainfall(mm),dew‐point_temperature(℃),sea_level_pressure(hPa),day_length(hour),year,month,day,hour
