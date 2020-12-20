@@ -4,6 +4,7 @@ import time
 import tweepy 
 from dotenv import load_dotenv
 import urllib.request, urllib.error
+import requests
 
 dotenv_path = join(dirname('../'+__file__), '.env')
 load_dotenv(dotenv_path)
@@ -26,50 +27,63 @@ def search_illust(search_word, lang, max_id):
     url_list = []
 
     if max_id:
-        search_results = api.search(q=search_word, lang=lang, rpp=PER_PAGE_NUMBER, max_id=max_id)
+        search_results = api.search(q=search_word, lang=lang, count=PER_PAGE_NUMBER, max_id=max_id)
     else:
-        search_results = api.search(q=search_word, lang=lang, rpp=PER_PAGE_NUMBER)
-    
+        search_results = api.search(q=search_word, lang=lang, count=PER_PAGE_NUMBER)
+
     for result in search_results:
         if 'media' not in result.entities:
             continue
         for media_url in result.entities['media']:
             url = media_url['media_url_https']
+            print(url)
+            break
             if url not in url_list:
                 url_list.append(url)
+        break
     max_id = result.id
 
     return url_list, max_id
 
-def download_illust(url):
-    url_org = url
-    # url_org = '%s:orig' % url # オリジナル画像のサイズで欲しいならコメント外す
-    save_path = 'G:/Image/paimon/' + url.split('/')[-1]
-    
-    try:
-        response = urllib.request.urlopen(url=url_org)
-        with open(save_path, "wb") as f:
-            f.write(response.read())
-    except Exception as e:
-        print('error')
+def download_illust(url_list):
+    for url in url_list:
+        url_org = url
+        # url_org = '%s:orig' % url # オリジナル画像のサイズで欲しいならコメント外す
+        # save_path = 'G:/Image/paimon/' + url.split('/')[-1]
+        save_path = 'D:/Illust/Paimon/' + url.split('/')[-1]
+        
+        try:
+            print('try')
+            # response = urllib.request.urlopen(url=url_org)
+            response = requests.get(url_org)
+            print('response', response.raise_for_status())
+            with open(save_path, "wb") as f:
+                print('write')
+                # f.write(response.read())
+                f.write(response.content)
+        except Exception as e:
+            print('error')
+            break
 
-def main(max_id=None):
-    search_word = input('search_word >')
-    search_lang = input('search_lang >')
+def sleep_limit():
+    pass
+
+def main():
+    max_id = None
+    search_word = input('search_word >') # パイモン
+    search_lang = input('search_lang >') # ja
 
     for page in range(SEARCH_PAGES_NUMBER):
-        # 進行状況
+        # 検索
+        url_list, max_id = search_illust(search_word, search_lang, max_id)
+        break
+        # ダウンロード
+        download_illust(url_list)
+
+         # 進行状況
         if page % 10 == 0:
             print(page)
 
-        # 検索
-        url_list, max_id = search_illust(search_word, search_lang, max_id)
-
-        # ダウンロード
-        for url in url_list:
-            download_illust(url)
-
-        time.sleep(0.5)
 
 if __name__ == "__main__":
     main()
