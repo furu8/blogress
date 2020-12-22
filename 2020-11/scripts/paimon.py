@@ -37,10 +37,10 @@ def search_illust(search_word, lang, max_id):
         for media_url in result.entities['media']:
             url = media_url['media_url_https']
             print(url)
-            break
             if url not in url_list:
                 url_list.append(url)
-        break
+
+    print(max_id, result.id)
     max_id = result.id
 
     return url_list, max_id
@@ -76,14 +76,16 @@ def main():
     for page in range(SEARCH_PAGES_NUMBER):
         # 検索
         url_list, max_id = search_illust(search_word, search_lang, max_id)
-        break
+        
         # ダウンロード
         download_illust(url_list)
 
          # 進行状況
         if page % 10 == 0:
             print(page)
-
+        
+        if page == 11:
+            break
 
 if __name__ == "__main__":
     main()
