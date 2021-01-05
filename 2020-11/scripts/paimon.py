@@ -1,10 +1,10 @@
 import os
 from os.path import join, dirname
-import time
-import tweepy 
-from dotenv import load_dotenv
-import urllib.request, urllib.error
+from requests_oauthlib import OAuth1Session
 import requests
+import json, datetime, time, pytz, re, sys,traceback
+from collections import defaultdict
+from dotenv import load_dotenv
 
 dotenv_path = join(dirname('../'+__file__), '.env')
 load_dotenv(dotenv_path)
@@ -19,73 +19,125 @@ ACCESS_TOKEN_SECRET = os.environ.get('Access_token_secret')
 SEARCH_PAGES_NUMBER = 1000 # 読み込むページ数
 PER_PAGE_NUMBER = 100 # ページごとに返されるツイートの数（最大100）
 
-auth = tweepy.OAuthHandler(API_KEY, API_SECRET_KEY)
-auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-api = tweepy.API(auth)
+oauth = OAuth1Session(API_KEY, API_SECRET_KEY,ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
-def search_illust(search_word, lang, max_id):
+def get_tweet_data(search_word, max_id):
+    url = 'https://api.twitter.com/1.1/search/tweets.json'
+    params = {
+            'q': search_word,
+            'count': PER_PAGE_NUMBER,
+    }
+    # max_idの指定があれば設定する
+    if max_id != -1:
+        params['max_id'] = max_id
+
+    req = oauth.get(url, params=params)   # Tweetデータの取得
+
+    # 取得したデータの分解
+    if req.status_code == 200: # 成功した場合
+        timeline = json.loads(req.text)
+        metadata = timeline['search_metadata']
+        statuses = timeline['statuses']
+        limit = req.headers['x-rate-limit-remaining'] if 'x-rate-limit-remaining' in req.headers else 0
+        reset = req.headers['x-rate-limit-reset'] if 'x-rate-limit-reset' in req.headers else 0              
+        return {
+            'result': True, 
+            'metadata': metadata, 
+            'statuses': statuses, 
+            'limit':limit, 
+            'reset_time': datetime.datetime.fromtimestamp(float(reset)), 
+            'reset_time_unix': reset 
+        }
+    else: # 失敗した場合
+        print ('Error: %d' % req.status_code)
+        return { 
+            'result': False, 
+            'status_code': req.status_code
+        }
+
+
+def search_illust(res):
     url_list = []
 
-    if max_id:
-        search_results = api.search(q=search_word, lang=lang, count=PER_PAGE_NUMBER, max_id=max_id)
-    else:
-        search_results = api.search(q=search_word, lang=lang, count=PER_PAGE_NUMBER)
+    tweet_list = res['statuses']
+    for tweet in tweet_list:
+        if 'extended_entities' in tweet:
+            for media in tweet['extended_entities']['media']:
+                media_type = media['type']
+                url = media['media_url']
+                if media_type == 'photo':
+                    url_list.append(url)
 
-    for result in search_results:
-        if 'media' not in result.entities:
-            continue
-        for media_url in result.entities['media']:
-            url = media_url['media_url_https']
-            print(url)
-            if url not in url_list:
-                url_list.append(url)
+    return url_list
 
-    print(max_id, result.id)
-    max_id = result.id
-
-    return url_list, max_id
 
 def download_illust(url_list):
     for url in url_list:
         url_org = url
         # url_org = '%s:orig' % url # オリジナル画像のサイズで欲しいならコメント外す
-        # save_path = 'G:/Image/paimon/' + url.split('/')[-1]
-        save_path = 'D:/Illust/Paimon/' + url.split('/')[-1]
-        
+        save_path = 'D:/Illust/Paimon/raw/' + os.path.basename(url)
+        # save_path = 'G:/Image/paimon/raw/' + os.path.basename(url)
+
         try:
-            print('try')
-            # response = urllib.request.urlopen(url=url_org)
             response = requests.get(url_org)
-            print('response', response.raise_for_status())
-            with open(save_path, "wb") as f:
-                print('write')
-                # f.write(response.read())
-                f.write(response.content)
+            response.raise_for_status()
+            # DL済みの画像かどうか判定
+            if not os.path.exists(save_path):
+                with open(save_path, 'wb') as f:
+                    # print('save: ' + save_path)
+                    f.write(response.content)
         except Exception as e:
-            print('error')
+            print('download error')
             break
 
-def sleep_limit():
-    pass
+def sleep_limit(res):
+    # 待ち時間の計算. リミット+5秒後に再開する
+    diff_sec = int(res['reset_time_unix']) - _now_unix_time()
+    print('sleep %d sec.' % (diff_sec + 5))
+
+    if diff_sec > 0:
+        time.sleep(diff_sec + 5)
+
+
+# 現在時刻をUNIX Timeで返す
+def _now_unix_time(self):
+    return time.mktime(datetime.datetime.now().timetuple())
+
 
 def main():
-    max_id = None
+    max_id = -1
     search_word = input('search_word >') # パイモン
-    search_lang = input('search_lang >') # ja
+    # search_lang = input('search_lang >') # ja
 
     for page in range(SEARCH_PAGES_NUMBER):
-        # 検索
-        url_list, max_id = search_illust(search_word, search_lang, max_id)
-        
-        # ダウンロード
-        download_illust(url_list)
+        # データ取得
+        res = get_tweet_data(search_word, max_id)
 
-         # 進行状況
-        if page % 10 == 0:
-            print(page)
-        
-        if page == 11:
+        # 失敗したら終了する
+        if res['result'] == False:    
+            print('status_code', res['status_code'])
             break
+        else:
+            max_id = res['statuses'][-1]['id'] # 次のmax_idを記録
 
-if __name__ == "__main__":
+        # 回数制限
+        if int(res['limit']) == 0:    
+            sleep_limit(res)
+        # 回数制限でなければダウンロード処理実行
+        else:
+            if len(res['statuses']) == 0:
+                sys.stdout.write('statuses is none.')
+            elif 'next_results' in res['metadata']:
+                # 検索
+                url_list = search_illust(res)
+                # ダウンロード
+                download_illust(url_list)
+                # 進行状況
+                if page % 10 == 0:
+                    print(page)
+            else:
+                sys.stdout.write('next is none. finished.')
+                break
+
+if __name__ == '__main__':
     main()
