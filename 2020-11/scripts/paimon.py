@@ -100,7 +100,7 @@ def sleep_limit(res):
 
 
 # 現在時刻をUNIX Timeで返す
-def _now_unix_time(self):
+def _now_unix_time():
     return time.mktime(datetime.datetime.now().timetuple())
 
 
