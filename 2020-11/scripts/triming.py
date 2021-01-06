@@ -35,12 +35,17 @@ def main():
     # トリミング対象の画像リスト
     image_list = gb.glob('D:/Illust/Paimon/raw/*')
     # print(len(image_list))
-
+    
     for image in image_list:
         # 保存するファイル名
-        save_file_name = image.split('/')[-1].split('.')[0]
+        save_file_name = str(os.path.basename(image)).split('.')[0]
+       
         # 顔抽出
-        face_image, face_list = get_face_img(image)
+        try:
+            face_image, face_list = get_face_img(image)
+        except:
+            print(save_file_name)
+            print(image)
         
         if len(face_list) == 0:
             continue
