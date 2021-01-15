@@ -29,7 +29,7 @@ def main():
     FACE_SAVE_PATH = 'D:/Illust/Paimon/interim/npy_face_only/anime_face.npy'
     save_image_npy(FACE_LOAD_PATH, FACE_SAVE_PATH)
     
-    FOOD_LOAD_PATH = 'D:/Illust/food-101/raw/demo/*/*'
+    FOOD_LOAD_PATH = 'D:/Illust/food-101/raw/images/*/*'
     FACE_SAVE_PATH = 'D:/Illust/food-101/interim/npy_food-101/food-101.npy'
     save_image_npy(FOOD_LOAD_PATH, FACE_SAVE_PATH)
 
