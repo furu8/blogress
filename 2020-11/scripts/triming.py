@@ -18,17 +18,17 @@ def get_face_img(image):
 
 def save_face_image(save_path, face_img):
     if not os.path.exists(save_path): # DL済みの画像かどうか判定
-        # リサイズ
-        resize_face_img = resize_face_illust(face_img, 64)
+        # # リサイズ
+        # resize_face_img = resize_face_illust(face_img, 64)
         # 保存
-        cv2.imwrite(save_path, resize_face_img) 
+        cv2.imwrite(save_path, face_img) 
         print(save_path + 'をトリミングし保存しました')
 
-def resize_face_illust(face_img, size):
-    width, height = size, size
-    resize_face_img = cv2.resize(face_img, (width, height))
+# def resize_face_illust(face_img, size):
+#     width, height = size, size
+#     resize_face_img = cv2.resize(face_img, (width, height))
     
-    return resize_face_img
+#     return resize_face_img
 
 # トリミング実行
 def main():
