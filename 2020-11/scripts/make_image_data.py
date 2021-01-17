@@ -33,11 +33,11 @@ def convert_img2npy(load_path, save_path, isdir=False):
             full_save_path = save_path + os.path.basename(path)
             image_list = load_image(full_load_path)
             np.save(full_save_path, image_list)
-            print('save')
+            print('save ', full_save_path)
     else:
         image_list = load_image(load_path)
         np.save(save_path, image_list)
-        print('save')
+        print('save ', save_path)
 
 
 def main():
@@ -47,7 +47,7 @@ def main():
     FOOD_SAVE_PATH = 'D:/Illust/food-101/interim/npy_food-101/'              # 飯画像のセーブパス（ディレクトリごとに画像がわかれているため顔画像と若干パスが異なる）
 
     # 顔画像をnpy形式に変換
-    # convert_img2npy(FACE_LOAD_PATH, FACE_SAVE_PATH)
+    convert_img2npy(FACE_LOAD_PATH, FACE_SAVE_PATH)
 
     # 飯画像をnpy形式に変換
     convert_img2npy(FOOD_LOAD_PATH, FOOD_SAVE_PATH, isdir=True)
