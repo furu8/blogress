@@ -1,3 +1,4 @@
+import os
 import glob as gb
 import pandas as pd
 import numpy as np
@@ -8,7 +9,9 @@ def load_image(path):
     image_list = gb.glob(path)
     npy_image_list = []
 
-    for image in image_list:
+    for i, image in enumerate(image_list):
+        if i % 100 == 0:
+            print(i)
         img = cv2.imread(image, cv2.IMREAD_COLOR) # デフォルトカラー読み込み
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) # RGB変換
         # plt.imshow(img)
@@ -19,19 +22,35 @@ def load_image(path):
     return npy_image_list
 
 
-def save_image_npy(read_path, save_path):
-    image_list = load_image(read_path)
-    np.save(save_path, image_list)
+def convert_img2npy(load_path, save_path, isdir=False):
+    """
+    isdir
+        画像の保存先がディレクトリごとにわかれていかどうか
+    """
+    if isdir:
+        for path in gb.glob(load_path):
+            full_load_path = path + '/*'
+            full_save_path = save_path + os.path.basename(path)
+            image_list = load_image(full_load_path)
+            np.save(full_save_path, image_list)
+            print('save')
+    else:
+        image_list = load_image(load_path)
+        np.save(save_path, image_list)
+        print('save')
 
 
 def main():
-    FACE_LOAD_PATH = 'D:/Illust/Paimon/interim/face_only/*'
-    FACE_SAVE_PATH = 'D:/Illust/Paimon/interim/npy_face_only/anime_face.npy'
-    save_image_npy(FACE_LOAD_PATH, FACE_SAVE_PATH)
-    
-    FOOD_LOAD_PATH = 'D:/Illust/food-101/raw/images/*/*'
-    FACE_SAVE_PATH = 'D:/Illust/food-101/interim/npy_food-101/food-101.npy'
-    save_image_npy(FOOD_LOAD_PATH, FACE_SAVE_PATH)
+    FACE_LOAD_PATH = 'D:/Illust/Paimon/interim/face_only/*'                  # 顔画像のロードパス
+    FACE_SAVE_PATH = 'D:/Illust/Paimon/interim/npy_face_only/anime_face.npy' # 顔画像のセーブパス
+    FOOD_LOAD_PATH = 'D:/Illust/food-101/raw/images/*'                       # 飯画像のロードパス（ディレクトリごとに画像がわかれているため顔画像と若干パスが異なる）
+    FOOD_SAVE_PATH = 'D:/Illust/food-101/interim/npy_food-101/'              # 飯画像のセーブパス（ディレクトリごとに画像がわかれているため顔画像と若干パスが異なる）
+
+    # 顔画像をnpy形式に変換
+    # convert_img2npy(FACE_LOAD_PATH, FACE_SAVE_PATH)
+
+    # 飯画像をnpy形式に変換
+    convert_img2npy(FOOD_LOAD_PATH, FOOD_SAVE_PATH, isdir=True)
 
 
 if __name__ == "__main__":
