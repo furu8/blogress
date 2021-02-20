@@ -56,26 +56,23 @@ def make_datagen(rr=30, wsr=0.3, hsr=0.3, hf=True, vf=True):
     return datagen
 
 
-def augument_image(images):
+def save_augumented_image(save_path, images):
     datagen = make_datagen()
     for image in images:
         image = image.reshape((1,) + image.shape)
-        for img in datagen.flow(image, batch_size=100):
-            yield img
+        g = datagen.flow(
+                image, 
+                batch_size=100, 
+                save_to_dir=save_path, 
+                save_prefix='paimon', 
+                save_format='png')
+        for i in range(10):
+            g.next()
 
 
 def save_npy_image(save_path, images):
     np.save(save_path, images)
     print('save ', save_path)
-
-
-def save_image(save_path, load_path, images):
-    filenames =  gb.glob(load_path)
-    for filename, image in zip(filenames, images):
-        filename = os.path.basename(filename)
-        full_save_path = save_path + filename
-        save_img(full_save_path, image)
-    print('save ', full_save_path)
 
 
 def main():
@@ -84,16 +81,21 @@ def main():
     FACE_SAVE_PATH = 'D:/Illust/Paimon/interim/npy_face_only/paimon_face.npy'   # 顔画像のセーブパス
     FOOD_LOAD_PATH = 'D:/OpenData/food-101/raw/images/*/*'                      # 飯画像のロードパス
     FOOD_SAVE_PATH = 'D:/OpenData/food-101/interim/npy_food-101.npy'            # 飯画像のセーブパス
-
+    
     # 顔画像
     face_image_list, face_npy_image_list = load_image(FACE_LOAD_PATH)
-    # face_aug_image_list = 
-    # save_npy_image(FACE_SAVE_PATH, face_npy_image_list)
-    save_image('D:/Illust/Paimon/interim/paimon_face_only_augmentation/', FACE_LOAD_PATH, augument_image(face_npy_image_list))
+    save_npy_image(FACE_SAVE_PATH, face_npy_image_list)
 
     # 飯画像
-    # food_image_list, food_npy_image_list = load_image(FOOD_LOAD_PATH)
-    # save_npy_image(FOOD_SAVE_PATH, food_npy_image_list)
+    food_image_list, food_npy_image_list = load_image(FOOD_LOAD_PATH)
+    save_npy_image(FOOD_SAVE_PATH, food_npy_image_list)
+
+    # 顔画像を水増し
+    AUG_PATH = 'D:/Illust/Paimon/interim/paimon_face_only_augmentation/*'
+    AUG_SAVE_PATH = 'D:/Illust/Paimon/interim/npy_face_only/paimon_face_augmentation.npy'
+    save_augumented_image(AUG_PATH, face_npy_image_list)
+    face_aug_image_list, face_aug_npy_image_list = load_image(AUG_PATH)
+    save_npy_image(AUG_SAVE_PATH, face_aug_npy_image_list)
 
 
 if __name__ == "__main__":
