@@ -11,8 +11,8 @@ def get_face_img(image):
     gray_image = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY) # グレースケール化
     gray_image = cv2.equalizeHist(gray_image) # ヒストグラム平均化（見やすくなる）
     
-    # face_list = cascade.detectMultiScale(gray_image, scaleFactor=1.01, minNeighbors=5, minSize=(24, 24)) # 見逃しを極力少なくパラメータ設定した場合
-    face_list = cascade.detectMultiScale(gray_image, scaleFactor=1.09, minNeighbors=5, minSize=(24, 24)) # 誤検知を極力少なくパラメータ設定した場合
+    face_list = cascade.detectMultiScale(gray_image, scaleFactor=1.01, minNeighbors=5, minSize=(24, 24)) # 見逃しを極力少なくパラメータ設定した場合
+    # face_list = cascade.detectMultiScale(gray_image, scaleFactor=1.09, minNeighbors=5, minSize=(24, 24)) # 誤検知を極力少なくパラメータ設定した場合
     
     return face_image, face_list
 
