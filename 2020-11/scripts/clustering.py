@@ -40,7 +40,7 @@ def load_image(path):
 
 # kmeansのモデル構築
 def build_kmeans(df, cluster_num):
-    kmeans = KMeans(n_clusters=cluster_num)
+    kmeans = KMeans(n_clusters=cluster_num, random_state=2021)
     kmeans.fit(df)
 
     return kmeans
