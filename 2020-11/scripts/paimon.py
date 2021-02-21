@@ -118,7 +118,10 @@ def main():
             print('status_code', res['status_code'])
             break
         else:
-            max_id = res['statuses'][-1]['id'] # 次のmax_idを記録
+            try:
+                max_id = res['statuses'][-1]['id'] # 次のmax_idを記録
+            except IndexError:
+                continue
 
         # 回数制限
         if int(res['limit']) == 0:    
