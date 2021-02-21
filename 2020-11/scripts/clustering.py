@@ -19,12 +19,12 @@ def load_image(path):
     npy_image_list = []
     image_path_list = gb.glob(path)
 
+    # 画像データを一枚ずつ読み込む
     for i, image in enumerate(image_path_list):
         image_path = image.replace(chr(92), '/') # \を/に置換(windows特有)->macはchr(165)
         if i % 100 == 0: # 雑に進行状況出力
             print(i)
         
-        # opencv版（PIL形式が必要なければこっちの方が少しだけ早い）
         img_npy = cv2.imread(image_path, cv2.IMREAD_COLOR) # デフォルトカラー読み込み
         img_npy = cv2.cvtColor(img_npy, cv2.COLOR_BGR2RGB) # RGB変換
         img_npy = cv2.resize(img_npy, (64, 64)) # リサイズ64x64
@@ -38,6 +38,7 @@ def load_image(path):
     return npy_image_list
 
 
+# kmeansのモデル構築
 def build_kmeans(df, cluster_num):
     kmeans = KMeans(n_clusters=cluster_num)
     kmeans.fit(df)
@@ -45,6 +46,7 @@ def build_kmeans(df, cluster_num):
     return kmeans
 
 
+# 主成分分析のモデル構築
 def build_pca(df):
     pca = PCA()
     pca.fit(df)
@@ -52,22 +54,27 @@ def build_pca(df):
     return pca
     
 
+# 主成分分析の累積寄与率を可視化（この結果をもとに特徴ベクトルを決める）
 def plot_contribution_rate(pca):
     plt.gca().get_xaxis().set_major_locator(ticker.MaxNLocator(integer=True))
     plt.plot([0] + list(np.cumsum(pca.explained_variance_ratio_)), "-o")
     plt.xlabel("Number of principal components")
     plt.ylabel("Cumulative contribution rate")
     plt.grid()
-    plt.show()
+    # plt.show()
+    plt.savefig('figure/pca_contribution_rate.png')
 
 
+# 主成分分析の第一主成分と第二主成分で散布図による可視化
 def plot_scatter2d(df):
     sns.scatterplot(data=df, x='PC1', y='PC2', hue='label', palette='bright', legend='full')
-    plt.show()
-    # plt.savefig('figure/pca_scatter2d.png')
+    # plt.show()
+    plt.savefig('figure/pca_scatter2d.png')
 
 
+# 主成分分析の第一主成分と第二主成分と第三主成分で散布図による可視化
 def plot_scatter3d(df):
+    # https://qiita.com/maskot1977/items/082557fcda78c4cdb41f
     fig = plt.figure()
     ax = Axes3D(fig)
 
@@ -82,8 +89,8 @@ def plot_scatter3d(df):
                 df.loc[df['label']==label, 'PC2'], 
                 df.loc[df['label']==label, 'PC3'], 
                 alpha=0.8, marker=".", linestyle='None')
-    plt.show()
-    # plt.savefig('figure/pca_scatter3d.png')
+    # plt.show()
+    plt.savefig('figure/pca_scatter3d.png')
 
 
 # 結果をクラスタごとにディレクトリに保存
@@ -108,11 +115,12 @@ def make_cluster_dir(load_path, save_path, kmeans):
 
 
 def main():
-    LOAD_PATH = 'D:/Illust/Paimon/interim/face_only/*'
-    SAVE_PATH = 'D:/Illust/Paimon/interim/face_only_clustering/'
+    LOAD_PATH = 'D:/Illust/Paimon/interim/face_only/*'            # 画像データの読込先
+    SAVE_PATH = 'D:/Illust/Paimon/interim/face_only_clustering/'  # 画像データをクラスタリングした結果の保存先
     CSV_PATH = 'D:/Illust/Paimon/interim/face_only_pca.csv'       # 画像データを主成分分析した結果の保存先
     
     try:
+        # すでに画像データを主成分分析した結果のCSVファイルがあれば読み込む、なければexceptへ
         pca_df = pd.read_csv(CSV_PATH)
     except FileNotFoundError:
         # 画像読み込み
@@ -123,15 +131,16 @@ def main():
         # 主成分分析の実行
         pca = build_pca(df)
         pca_df = pd.DataFrame(pca.transform(df), columns=["PC{}".format(x + 1) for x in range(len(df))])
-        plot_contribution_rate(pca) # 累積寄与率可視化
+        plot_contribution_rate(pca)          # 累積寄与率可視化
         pca_df.to_csv(CSV_PATH, index=False) # 保存
     
-    train_df = pca_df.iloc[:, :1200]
-    
-    cluster_num = int(input('cluster_num >')) # クラスタ数を入力
-    kmeans = build_kmeans(train_df, cluster_num) # kmeansモデル構築
+    # kmeansによるクラスタリング
+    train_df = pca_df.iloc[:, :1200]               # 学習データ
+    cluster_num = int(input('cluster_num >'))      # クラスタ数を入力
+    kmeans = build_kmeans(train_df, cluster_num)   # kmeansモデル構築
     make_cluster_dir(LOAD_PATH, SAVE_PATH, kmeans) # クラスタリング結果からディレクトリ作成
 
+    # 可視化
     pca_df['label'] = kmeans.labels_ 
     plot_scatter2d(pca_df)              # 二次元散布図
     plot_scatter3d(pca_df)              # 三次元散布図
