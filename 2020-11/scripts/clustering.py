@@ -56,20 +56,22 @@ def build_pca(df):
 
 # 主成分分析の累積寄与率を可視化（この結果をもとに特徴ベクトルを決める）
 def plot_contribution_rate(pca):
+    fig = plt.figure()
     plt.gca().get_xaxis().set_major_locator(ticker.MaxNLocator(integer=True))
     plt.plot([0] + list(np.cumsum(pca.explained_variance_ratio_)), "-o")
     plt.xlabel("Number of principal components")
     plt.ylabel("Cumulative contribution rate")
     plt.grid()
-    # plt.show()
-    plt.savefig('figure/pca_contribution_rate.png')
+    plt.show()
+    # plt.savefig('../figure/pca_contribution_rate.png') 
 
 
 # 主成分分析の第一主成分と第二主成分で散布図による可視化
 def plot_scatter2d(df):
+    fig = plt.figure()
     sns.scatterplot(data=df, x='PC1', y='PC2', hue='label', palette='bright', legend='full')
-    # plt.show()
-    plt.savefig('figure/pca_scatter2d.png')
+    plt.show()
+    # plt.savefig('../figure/pca_scatter2d.png')
 
 
 # 主成分分析の第一主成分と第二主成分と第三主成分で散布図による可視化
@@ -89,8 +91,8 @@ def plot_scatter3d(df):
                 df.loc[df['label']==label, 'PC2'], 
                 df.loc[df['label']==label, 'PC3'], 
                 alpha=0.8, marker=".", linestyle='None')
-    # plt.show()
-    plt.savefig('figure/pca_scatter3d.png')
+    plt.show()
+    # plt.savefig('../figure/pca_scatter3d.png')
 
 
 # 結果をクラスタごとにディレクトリに保存
