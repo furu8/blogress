@@ -18,6 +18,7 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import precision_score
 from sklearn.metrics import f1_score
 from sklearn.model_selection import StratifiedKFold
+from tensorflow.keras.models import load_model
 
 #TensorFlowがGPUを認識しているか確認
 from tensorflow.python.client import device_lib
@@ -45,14 +46,14 @@ def build_cnn_model():
 
     # 入力画像 64x64x3 (縦の画素数)x(横の画素数)x(チャンネル数)
     model.add(Conv2D(16, kernel_size=(5, 5), activation='relu',
-                    kernel_initializer='he_normal', input_shape=(64, 64, 3)))  # 28x28x1 -> 24x24x16
-    model.add(MaxPooling2D(pool_size=(2, 2)))  # 24x24x16 -> 12x12x16
+                    kernel_initializer='he_normal', input_shape=(64, 64, 3)))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Conv2D(64, kernel_size=(5, 5), activation='relu',
-                    kernel_initializer='he_normal'))  # 12x12x16 -> 8x8x64
-    model.add(MaxPooling2D(pool_size=(2, 2)))  # 8x8x64 -> 4x4x64
+                    kernel_initializer='he_normal'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
 
-    model.add(Flatten())  # 4x4x64-> 1024
-    model.add(Dense(1, activation='sigmoid'))  # 1024 -> 10
+    model.add(Flatten())
+    model.add(Dense(1, activation='sigmoid'))
 
     model.compile(
         loss='binary_crossentropy',
@@ -102,6 +103,11 @@ def predict_model(model, X_test):
     return y_pred
 
 
+def save_model(path, model):
+    model.save(path)
+    print('saved model: ', path)
+
+
 # 評価系のグラフをプロット
 def plot_evaluation(eval_dict, key1, key2, ylabel):
     plt.plot(eval_dict[key1], label=key1)
@@ -119,34 +125,34 @@ def main():
     face_image = load_image_npy('D:/Illust/Paimon/interim/npy_face_only/paimon_face_augmentation.npy')
     food_image = load_image_npy('D:/OpenData/food-101/interim/npy_food-101.npy')
     food_image = food_image[np.random.choice(food_image.shape[0], 10000, replace=False), :] # food_image101000枚の画像からランダムに10000枚抽出
-
-    X_train, X_test, y_train, y_test = make_train_test_data(face_image, food_image)
-    
     print(face_image.shape)
     print(food_image.shape)
-    print(X_train.shape)
-    print(X_test.shape)
-    print(y_train.shape)
-    print(y_test.shape)
+
+    X_train, X_test, y_train, y_test = make_train_test_data(face_image, food_image)
 
     score_list = []
-    kf = StratifiedKFold(n_splits=4, shffle=True, random_state=2021)
+    kf = StratifiedKFold(n_splits=3, shuffle=True, random_state=2021)
     for train_idx, val_idx in kf.split(X_train, y_train):
-        train_x, val_x = X_train.iloc[train_idx], X_train.iloc[val_idx]
-        train_y, val_y = y_train.iloc[train_idx], y_train.iloc[val_idx]
+        train_x, val_x = X_train[train_idx], X_train[val_idx]
+        train_y, val_y = y_train[train_idx], y_train[val_idx]
 
         model = build_cnn_model()
         hist = learn_model(model, train_x, train_y)
         
-        # plot_evaluation(hist.history, 'loss', 'val_loss', 'loss')
-        # plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy')
+        plot_evaluation(hist.history, 'loss', 'val_loss', 'loss')
+        plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy')
 
         score = evaluate_model(model, X_test, y_test)
         y_pred = predict_model(model, X_test)
-        # y_test = np.argmax(y_test, axis=1)
 
+        # y_test = np.argmax(y_test, axis=1)
         y_pred = [1 if y > 0.9 else 0 for y in y_pred.flatten()]
+
+        score_list.append(f1_score(y_test, y_pred))
         print(classification_report(y_test, y_pred, target_names=['food', 'face']))
+    
+    print(score_list)
+    print(np.array(score_list).mean())
 
 
 if __name__ == "__main__":
