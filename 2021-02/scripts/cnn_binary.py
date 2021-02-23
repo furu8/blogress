@@ -42,6 +42,11 @@ def make_train_test_data(image1, image2):
 
 # モデル構築
 def build_cnn_model():
+    '''
+    初期化 (initializer)
+    Glorotの初期化法:sigmoid関数やtanh関数
+    Heの初期化法:ReLU関数
+    '''
     model = Sequential()
 
     # 入力画像 64x64x3 (縦の画素数)x(横の画素数)x(チャンネル数)
@@ -72,11 +77,10 @@ def learn_model(model, X_train, y_train):
                                                         shuffle=True, 
                                                         random_state=2021)
 
-    print(X_train.shape)
-    print(X_val.shape)
-    print(y_train.shape)
-    print(y_val.shape)
-    early_stopping = EarlyStopping(monitor='val_loss', min_delta=1.0e-3, patience=20, verbose=1)
+    early_stopping = EarlyStopping(monitor='val_loss',
+                                min_delta=1.0e-3, 
+                                patience=20, 
+                                verbose=1)
     hist = model.fit(X_train, y_train, 
                 batch_size=1000, 
                 verbose=2, 
