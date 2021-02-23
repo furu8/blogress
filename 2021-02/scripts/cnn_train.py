@@ -90,16 +90,22 @@ def predict_model(model, X_test, y_test):
 
 
 def main():
-    face_image = load_image_npy('D:/Illust/Paimon/interim/npy_face_only/anime_face.npy')
+    face_image = load_image_npy('D:/Illust/Paimon/interim/npy_face_only/paimon_face_augmentation.npy')
     food_image = load_image_npy('D:/OpenData/food-101/interim/npy_food-101.npy')
     
     X_train, X_test, y_train, y_test = make_train_test_data(face_image, food_image)
+    print(face_image.shape)
+    print(food_image.shape)
+    print(X_train.shape)
+    print(X_test.shape)
+    print(y_train.shape)
+    print(y_test.shape)
 
-    model = build_cnn_model()
-    model = learn_model(model, X_train, y_train)
-    evaluate_model(model, X_test, y_test)
-    y_test, y_pred = predict_model(model, X_test, y_test)
-    print(classification_report(y_test, y_pred, target_names=['food', 'face']))
+    # model = build_cnn_model()
+    # model = learn_model(model, X_train, y_train)
+    # evaluate_model(model, X_test, y_test)
+    # y_test, y_pred = predict_model(model, X_test, y_test)
+    # print(classification_report(y_test, y_pred, target_names=['food', 'face']))
 
 
 if __name__ == "__main__":
