@@ -91,6 +91,8 @@ def evaluate_model(model, X_test, y_test):
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
 
+    return score
+
 
 def predict_model(model, X_test):
     y_pred = model.predict(X_test, batch_size=128)
@@ -139,7 +141,7 @@ def main():
         # plot_evaluation(hist.history, 'loss', 'val_loss', 'loss')
         # plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy')
 
-        evaluate_model(model, X_test, y_test)
+        score = evaluate_model(model, X_test, y_test)
         y_pred = predict_model(model, X_test)
         # y_test = np.argmax(y_test, axis=1)
 
