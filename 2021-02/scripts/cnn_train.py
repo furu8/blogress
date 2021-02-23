@@ -74,7 +74,7 @@ def learn_model(model, X_train, y_train):
     print(X_val.shape)
     print(y_train.shape)
     print(y_val.shape)
-    early_stopping = EarlyStopping(monitor='val_loss', patience=20, verbose=1, mode='auto') # https://qiita.com/yukiB/items/f45f0f71bc9739830002
+    early_stopping = EarlyStopping(monitor='val_loss', min_delta=1.0e-3, patience=20, verbose=1)
     hist = model.fit(X_train, y_train, 
                 batch_size=1000, 
                 verbose=2, 
@@ -100,9 +100,9 @@ def predict_model(model, X_test):
 
 
 # 評価系のグラフをプロット
-def plot_evaluation(eval_dict, col1, col2, ylabel):
-    plt.plot(eval_dict[col1], label=col1)
-    plt.plot(eval_dict[col2], label=col2)
+def plot_evaluation(eval_dict, key1, key2, ylabel):
+    plt.plot(eval_dict[key1], label=key1)
+    plt.plot(eval_dict[key2], label=key2)
     plt.ylabel(ylabel)
     plt.xlabel('epoch')
     plt.legend()
@@ -136,11 +136,8 @@ def main():
     y_pred = predict_model(model, X_test)
     # y_test = np.argmax(y_test, axis=1)
 
-    print(y_test)
-    print(y_pred)
-    print(y_test.flatten())
-    print(y_pred.flatten().astype(np.int32))
-    print(classification_report(y_test.flatten(), y_pred.flatten().astype(np.int32), target_names=['food', 'face']))
+    y_pred = [1 if y > 0.9 else 0 for y in y_pred.flatten()]
+    print(classification_report(y_test, y_pred, target_names=['food', 'face']))
 
 
 if __name__ == "__main__":
