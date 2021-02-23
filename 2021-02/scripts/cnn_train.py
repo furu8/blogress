@@ -74,15 +74,15 @@ def learn_model(model, X_train, y_train):
     print(X_val.shape)
     print(y_train.shape)
     print(y_val.shape)
-    early_stopping = EarlyStopping(monitor='val_loss', patience=1, verbose=1, mode='auto') # https://qiita.com/yukiB/items/f45f0f71bc9739830002
-    model.fit(X_train, y_train, 
+    early_stopping = EarlyStopping(monitor='val_loss', patience=20, verbose=1, mode='auto') # https://qiita.com/yukiB/items/f45f0f71bc9739830002
+    hist = model.fit(X_train, y_train, 
                 batch_size=1000, 
                 verbose=2, 
-                epochs=10, 
+                epochs=100, 
                 validation_data=(X_val, y_val), 
                 callbacks=[early_stopping])
     
-    return model
+    return hist
 
 
 def evaluate_model(model, X_test, y_test):
@@ -97,6 +97,16 @@ def predict_model(model, X_test):
     # y_pred = np.argmax(y_pred, axis=1)
 
     return y_pred
+
+
+# 評価系のグラフをプロット
+def plot_evaluation(eval_dict, col1, col2, ylabel):
+    plt.plot(eval_dict[col1], label=col1)
+    plt.plot(eval_dict[col2], label=col2)
+    plt.ylabel(ylabel)
+    plt.xlabel('epoch')
+    plt.legend()
+    plt.show()
 
 
 def main():
@@ -117,10 +127,15 @@ def main():
     print(y_test.shape)
 
     model = build_cnn_model()
-    model = learn_model(model, X_train, y_train)
+    hist = learn_model(model, X_train, y_train)
+    
+    plot_evaluation(hist.history, 'loss', 'val_loss', 'loss')
+    plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy')
+
     evaluate_model(model, X_test, y_test)
     y_pred = predict_model(model, X_test)
     # y_test = np.argmax(y_test, axis=1)
+
     print(y_test)
     print(y_pred)
     print(y_test.flatten())
