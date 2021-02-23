@@ -17,6 +17,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import precision_score
 from sklearn.metrics import f1_score
+from sklearn.model_selection import StratifiedKFold
 
 #TensorFlowがGPUを認識しているか確認
 from tensorflow.python.client import device_lib
@@ -126,18 +127,24 @@ def main():
     print(y_train.shape)
     print(y_test.shape)
 
-    model = build_cnn_model()
-    hist = learn_model(model, X_train, y_train)
-    
-    plot_evaluation(hist.history, 'loss', 'val_loss', 'loss')
-    plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy')
+    score_list = []
+    kf = StratifiedKFold(n_splits=4, shffle=True, random_state=2021)
+    for train_idx, val_idx in kf.split(X_train, y_train):
+        train_x, val_x = X_train.iloc[train_idx], X_train.iloc[val_idx]
+        train_y, val_y = y_train.iloc[train_idx], y_train.iloc[val_idx]
 
-    evaluate_model(model, X_test, y_test)
-    y_pred = predict_model(model, X_test)
-    # y_test = np.argmax(y_test, axis=1)
+        model = build_cnn_model()
+        hist = learn_model(model, train_x, train_y)
+        
+        # plot_evaluation(hist.history, 'loss', 'val_loss', 'loss')
+        # plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy')
 
-    y_pred = [1 if y > 0.9 else 0 for y in y_pred.flatten()]
-    print(classification_report(y_test, y_pred, target_names=['food', 'face']))
+        evaluate_model(model, X_test, y_test)
+        y_pred = predict_model(model, X_test)
+        # y_test = np.argmax(y_test, axis=1)
+
+        y_pred = [1 if y > 0.9 else 0 for y in y_pred.flatten()]
+        print(classification_report(y_test, y_pred, target_names=['food', 'face']))
 
 
 if __name__ == "__main__":
