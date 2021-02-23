@@ -91,7 +91,7 @@ def predict_model(model, X_test, y_test):
 
 def main():
     face_image = load_image_npy('D:/Illust/Paimon/interim/npy_face_only/anime_face.npy')
-    food_image = load_image_npy('D:/Illust/food-101/interim/npy_food-101/npy_food-101.npy')
+    food_image = load_image_npy('D:/OpenData/food-101/interim/npy_food-101.npy')
     
     X_train, X_test, y_train, y_test = make_train_test_data(face_image, food_image)
 
