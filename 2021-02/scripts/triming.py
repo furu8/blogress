@@ -12,9 +12,9 @@ def get_face_img(image, mode):
     gray_image = cv2.equalizeHist(gray_image) # ヒストグラム平均化（見やすくなる）
     
     if mode == '0':
-        face_list = cascade.detectMultiScale(gray_image, scaleFactor=1.01, minNeighbors=5, minSize=(24, 24)) # 見逃しを極力少なくパラメータ設定した場合
+        face_list = cascade.detectMultiScale(gray_image, scaleFactor=1.01, minNeighbors=5, minSize=(32, 32)) # 見逃しを極力少なくパラメータ設定した場合
     elif mode == '1':
-        face_list = cascade.detectMultiScale(gray_image, scaleFactor=1.09, minNeighbors=5, minSize=(24, 24)) # 誤検知を極力少なくパラメータ設定した場合
+        face_list = cascade.detectMultiScale(gray_image, scaleFactor=1.09, minNeighbors=5, minSize=(32, 32)) # 誤検知を極力少なくパラメータ設定した場合
     else:
         print('入力が不正です（0:見逃し少 1:誤検知少）')
         face_list = None
