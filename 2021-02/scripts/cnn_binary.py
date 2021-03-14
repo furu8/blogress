@@ -26,7 +26,7 @@ from tensorflow.python.client import device_lib
 
 def load_image_npy(load_path, isdir=False):
     if isdir:
-        return [np.load(path, allow_pickle=True) for path in gb.glob(load_path)]
+        return np.array([np.load(path, allow_pickle=True) for path in gb.glob(load_path)])
     else:
         return np.load(load_path, allow_pickle=True)
 
