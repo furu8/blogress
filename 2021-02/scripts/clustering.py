@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import seaborn as sns
 from mpl_toolkits.mplot3d import Axes3D
+import umap as up
 
 
 def load_image(path):
@@ -52,6 +53,14 @@ def build_pca(df):
     pca.fit(df)
 
     return pca
+
+
+# UMAPのモデル構築
+def build_umap(df, components_num):
+    umap = up.UMAP(n_components=components_num, n_neighbors=5)
+    umap.fit(df)
+
+    return umap
     
 
 # 主成分分析の累積寄与率を可視化（この結果をもとに特徴ベクトルを決める）
@@ -69,7 +78,7 @@ def plot_contribution_rate(pca):
 # 主成分分析の第一主成分と第二主成分で散布図による可視化
 def plot_scatter2d(df):
     fig = plt.figure()
-    sns.scatterplot(data=df, x='PC1', y='PC2', hue='label', palette='bright', legend='full')
+    sns.scatterplot(data=df, x='PC1', y='PC2', hue='label', palette='Set2', legend='full')
     plt.show()
     # plt.savefig('../figure/pca_scatter2d.png')
 
@@ -136,8 +145,14 @@ def main():
         plot_contribution_rate(pca)          # 累積寄与率可視化
         pca_df.to_csv(CSV_PATH, index=False) # 保存
     
+    # UMAP
+    pca_df = pca_df.iloc[:, :1200]               # 主成分分析した結果
+    components_num = 2
+    umap = build_umap(pca_df, components_num)
+    umap_df = pd.DataFrame(umap.transform(pca_df), columns=["PC{}".format(x + 1) for x in range(components_num)])
+
     # kmeansによるクラスタリング
-    train_df = pca_df.iloc[:, :1200]               # 学習データ
+    train_df = umap_df.copy()
     cluster_num = int(input('cluster_num >'))      # クラスタ数を入力
     kmeans = build_kmeans(train_df, cluster_num)   # kmeansモデル構築
     make_cluster_dir(LOAD_PATH, SAVE_PATH, kmeans) # クラスタリング結果からディレクトリ作成
@@ -145,7 +160,7 @@ def main():
     # 可視化
     pca_df['label'] = kmeans.labels_ 
     plot_scatter2d(pca_df)              # 二次元散布図
-    plot_scatter3d(pca_df)              # 三次元散布図
+    # plot_scatter3d(pca_df)              # 三次元散布図
 
     
 if __name__ == "__main__":
