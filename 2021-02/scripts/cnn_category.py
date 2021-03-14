@@ -161,6 +161,8 @@ def main():
     print(food_images.shape)
 
     labels = np.loadtxt('D:/OpenData/food-101/raw/meta/labels.txt', delimiter='\n', dtype=str)
+    labels = labels[:len(gb.glob('D:/OpenData/food-101/interim/npy_food-101_64/*'))]
+    print(labels.shape)
 
     X_train, X_test, y_train, y_test = make_train_test_data(face_images, food_images, labels)
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, shuffle=True, random_state=2021)
