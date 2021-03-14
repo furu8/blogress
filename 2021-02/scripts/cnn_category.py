@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 import tensorflow.keras as keras
 from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Input, Activation, add, Add, Dropout, BatchNormalization
+from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Conv2D, MaxPooling2D, Flatten, Input, Activation, add, Add, Dropout, BatchNormalization
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.utils import to_categorical
 
@@ -20,6 +20,7 @@ from sklearn.metrics import f1_score
 from sklearn.model_selection import StratifiedKFold
 from tensorflow.keras.models import load_model
 from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.applications import InceptionV3
 
 #TensorFlowがGPUを認識しているか確認
 from tensorflow.python.client import device_lib
@@ -76,7 +77,33 @@ def build_cnn_model():
     return model
 
 
+def build_imagenet():
+    print('build_imagenet')
+    imagenet_model = InceptionV3(include_top=False, 
+                                weights="imagenet", 
+                                input_shape=(128,128,3))
+    x = GlobalAveragePooling2D()(imagenet_model.layers[-1].output)
+    x = Dense(102, activation="softmax")(x)
+
+    # mixed4(132)から先を訓練する
+    for i in range(133):
+        imagenet_model.layers[i].trainable = False
+
+    model = Model(imagenet_model.inputs, x)
+    model.compile(
+        loss='categorical_crossentropy',
+        optimizer='adam',
+        metrics=['accuracy']
+    )
+
+    model.summary()
+
+    return model
+
+
 def learn_model(model, X_train, y_train, X_val, y_val):
+    print('learn_model')
+
     early_stopping = EarlyStopping(monitor='val_loss',
                                 min_delta=1.0e-3, 
                                 patience=20, 
@@ -127,7 +154,9 @@ def main():
     # print(device_lib.list_local_devices())
 
     face_images = load_image_npy('D:/Illust/Paimon/interim/npy_face_only/paimon_face_augmentation.npy')
-    food_images = load_image_npy('D:/OpenData/food-101/interim/npy_food-101.npy')
+    # food_images = load_image_npy('D:/OpenData/food-101/interim/npy_food-101.npy')
+    food_images = load_image_npy('D:/OpenData/food-101/interim/npy_food-101_64/*', isdir=True)
+    
     print(face_images.shape)
     print(food_images.shape)
 
@@ -149,6 +178,7 @@ def main():
     print(y_test.shape)
 
     model = build_cnn_model()
+    # model = build_imagenet()
     hist = learn_model(model, X_train, y_train, X_val, y_val)
     
     plot_evaluation(hist.history, 'loss', 'val_loss', 'loss')
