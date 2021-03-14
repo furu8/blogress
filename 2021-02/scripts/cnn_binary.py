@@ -33,7 +33,7 @@ def load_image_npy(load_path, isdir=False):
 
 def make_train_test_data(image1, image2):
     X = np.concatenate([image1, image2])
-    y = np.array([1] * len(image1) + [0] * len(image2)) # face:1, food:0
+    y = np.array([0] * len(image1) + [1] * len(image2)) # face:0, food:1
     
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, shuffle=True, random_state=2021)
 

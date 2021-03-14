@@ -19,6 +19,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import f1_score
 from sklearn.model_selection import StratifiedKFold
 from tensorflow.keras.models import load_model
+from tensorflow.keras.utils import to_categorical
 
 #TensorFlowがGPUを認識しているか確認
 from tensorflow.python.client import device_lib
@@ -31,9 +32,13 @@ def load_image_npy(load_path, isdir=False):
         return np.load(load_path, allow_pickle=True)
 
 
-def make_train_test_data(image1, image2):
+def make_train_test_data(image1, image2, labels):
     X = np.concatenate([image1, image2])
-    y = np.array([1] * len(image1) + [0] * len(image2)) # face:1, food:0
+
+    label_list = [0] * len(image1)
+    for i in range(len(labels)):
+        label_list += [i+1] * 1000 
+    y = np.array(label_list)
     
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, shuffle=True, random_state=2021)
 
@@ -58,10 +63,10 @@ def build_cnn_model():
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
     model.add(Flatten())
-    model.add(Dense(1, activation='sigmoid'))
+    model.add(Dense(102, activation='softmax'))
 
     model.compile(
-        loss='binary_crossentropy',
+        loss='categorical_crossentropy',
         optimizer='adam',
         metrics=['accuracy']
     )
@@ -71,12 +76,7 @@ def build_cnn_model():
     return model
 
 
-def learn_model(model, X_train, y_train):
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, 
-                                                        test_size=0.25, 
-                                                        shuffle=True, 
-                                                        random_state=2021)
-
+def learn_model(model, X_train, y_train, X_val, y_val):
     early_stopping = EarlyStopping(monitor='val_loss',
                                 min_delta=1.0e-3, 
                                 patience=20, 
@@ -126,37 +126,38 @@ def main():
     # GPUの動作確認
     # print(device_lib.list_local_devices())
 
-    face_image = load_image_npy('D:/Illust/Paimon/interim/npy_face_only/paimon_face_augmentation.npy')
-    food_image = load_image_npy('D:/OpenData/food-101/interim/npy_food-101.npy')
-    food_image = food_image[np.random.choice(food_image.shape[0], 10000, replace=False), :] # food_image101000枚の画像からランダムに10000枚抽出
-    print(face_image.shape)
-    print(food_image.shape)
+    face_images = load_image_npy('D:/Illust/Paimon/interim/npy_face_only/paimon_face_augmentation.npy')
+    food_images = load_image_npy('D:/OpenData/food-101/interim/npy_food-101.npy')
+    print(face_images.shape)
+    print(food_images.shape)
 
-    X_train, X_test, y_train, y_test = make_train_test_data(face_image, food_image)
+    labels = np.loadtxt('D:/OpenData/food-101/raw/meta/labels.txt', delimiter='\n', dtype=str)
 
-    score_list = []
-    kf = StratifiedKFold(n_splits=3, shuffle=True, random_state=2021)
-    for train_idx, val_idx in kf.split(X_train, y_train):
-        train_x, val_x = X_train[train_idx], X_train[val_idx]
-        train_y, val_y = y_train[train_idx], y_train[val_idx]
+    X_train, X_test, y_train, y_test = make_train_test_data(face_images, food_images, labels)
+    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, shuffle=True, random_state=2021)
 
-        model = build_cnn_model()
-        hist = learn_model(model, train_x, train_y)
-        
-        plot_evaluation(hist.history, 'loss', 'val_loss', 'loss')
-        plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy')
+    # ラベルをOne-Hotに変換
+    y_train = to_categorical(y_train)
+    y_val = to_categorical(y_val)
+    y_test = to_categorical(y_test)
 
-        score = evaluate_model(model, X_test, y_test)
-        y_pred = predict_model(model, X_test)
+    print(X_train.shape)
+    print(X_val.shape)
+    print(X_test.shape)
+    print(y_train.shape)
+    print(y_val.shape)
+    print(y_test.shape)
 
-        # y_test = np.argmax(y_test, axis=1)
-        y_pred = [1 if y > 0.9 else 0 for y in y_pred.flatten()]
-
-        score_list.append(f1_score(y_test, y_pred))
-        print(classification_report(y_test, y_pred, target_names=['food', 'face']))
+    model = build_cnn_model()
+    hist = learn_model(model, X_train, y_train, X_val, y_val)
     
-    print(score_list)
-    print(np.array(score_list).mean())
+    plot_evaluation(hist.history, 'loss', 'val_loss', 'loss')
+    plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy')
+
+    score = evaluate_model(model, X_test, y_test)
+    y_pred = predict_model(model, X_test)
+
+    print(classification_report(y_test, y_pred))
 
 
 if __name__ == "__main__":
