@@ -40,4 +40,4 @@ print(food_images.shape)
 # food_images = np.array([cv2.resize(food_image, (resize_num,resize_num)) for food_image in food_images])
 
 # save_npy_image('D:/Illust/Paimon/interim/npy_face_only/paimon_face_augmentation_128.npy', face_images)
-save_npy_image('D:/OpenData/food-101/interim/npy_food-101_64/npy_food-101_64_.npy', food_images)
+save_npy_image('D:/OpenData/food-101/interim/npy_food-101_64/npy_food-101_64.npy', food_images)
