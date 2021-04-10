@@ -3,7 +3,9 @@ import glob as gb
 import pandas as pd
 import numpy as np
 import cv2
+import seaborn as sns
 import matplotlib.pyplot as plt
+import re
 
 import tensorflow.keras as keras
 from tensorflow.keras.models import Sequential, Model
@@ -12,7 +14,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.utils import to_categorical
 
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import precision_score
@@ -64,7 +66,7 @@ def build_cnn_model():
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
     model.add(Flatten())
-    model.add(Dense(102, activation='softmax'))
+    model.add(Dense(15, activation='softmax'))
 
     model.compile(
         loss='categorical_crossentropy',
@@ -153,16 +155,13 @@ def main():
     # GPUの動作確認
     # print(device_lib.list_local_devices())
 
-    face_images = load_image_npy('D:/Illust/Paimon/interim/npy_face_only/paimon_face_augmentation.npy')
-    # food_images = load_image_npy('D:/OpenData/food-101/interim/npy_food-101.npy')
-    food_images = load_image_npy('D:/OpenData/food-101/interim/npy_food-101_64/*', isdir=True)
-    
+    face_images = load_image_npy('D:/Illust/Paimon/interim/npy_face_only/paimon_face.npy')
+    food_images = load_image_npy('D:/OpenData/food-101/interim/npy_food-101_64/npy_food-101_64.npy')
+
     print(face_images.shape)
     print(food_images.shape)
-
-    labels = np.loadtxt('D:/OpenData/food-101/raw/meta/labels.txt', delimiter='\n', dtype=str)
-    labels = labels[:len(gb.glob('D:/OpenData/food-101/interim/npy_food-101_64/*'))]
-    print(labels.shape)
+   
+    labels = [re.split('[\\\.]',path)[-2] for path in gb.glob('D:/OpenData/food-101/interim/npy_food-101_64/food/*')]
 
     X_train, X_test, y_train, y_test = make_train_test_data(face_images, food_images, labels)
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, shuffle=True, random_state=2021)
@@ -170,7 +169,6 @@ def main():
     # ラベルをOne-Hotに変換
     y_train = to_categorical(y_train)
     y_val = to_categorical(y_val)
-    y_test = to_categorical(y_test)
 
     print(X_train.shape)
     print(X_val.shape)
@@ -186,11 +184,19 @@ def main():
     plot_evaluation(hist.history, 'loss', 'val_loss', 'loss')
     plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy')
 
-    score = evaluate_model(model, X_test, y_test)
     y_pred = predict_model(model, X_test)
+    y_pred = np.argmax(y_pred, axis=1)
 
-    print(classification_report(y_test, y_pred))
+    labels = ['paimon'] + labels
+    print(classification_report(y_test, y_pred, target_names=labels))
+    cmx = confusion_matrix(y_test, y_pred)
+    print(cmx)
 
+    df_cmx = pd.DataFrame(cmx, index=labels, columns=labels)
+    plt.figure(figsize = (10,7))
+    sns.heatmap(df_cmx, annot=True, fmt='d')
+    plt.ylim(0, len(labels))
+    plt.show()
 
 if __name__ == "__main__":
     main()
