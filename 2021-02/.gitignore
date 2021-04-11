@@ -3,4 +3,6 @@
 /scripts/demo/
 /config/
 /figure/
+/figures/
+/log/
 .DS_store
