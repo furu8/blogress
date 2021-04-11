@@ -23,6 +23,7 @@ from sklearn.model_selection import StratifiedKFold
 from tensorflow.keras.models import load_model
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.applications import InceptionV3
+from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img, save_img, img_to_array, array_to_img
 
 #TensorFlowがGPUを認識しているか確認
 from tensorflow.python.client import device_lib
@@ -46,6 +47,27 @@ def make_train_test_data(image1, image2, labels):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, shuffle=True, random_state=2021)
 
     return X_train, X_test, y_train, y_test
+
+
+def make_datagen(rr=30, wsr=0.3, hsr=0.3, zr=0.2, val_spilit=0.2, hf=True, vf=True):
+    datagen = ImageDataGenerator(
+            # https://keras.io/ja/preprocessing/image/
+            rescale = 1./255,                      # スケーリング　
+            featurewise_center = False,            # データセット全体で，入力の平均を0にするかどうか
+            samplewise_center = False,             # 各サンプルの平均を0にするかどうか
+            featurewise_std_normalization = False, # 入力をデータセットの標準偏差で正規化するかどうか
+            samplewise_std_normalization = False,  # 各入力をその標準偏差で正規化するかどうか
+            zca_whitening = False,                 # ZCA白色化を適用するかどうか
+            rotation_range = rr,                   # ランダムに±指定した角度の範囲で回転 
+            width_shift_range = wsr,               # ランダムに±指定した横幅に対する割合の範囲で左右方向移動
+            height_shift_range = hsr,              # ランダムに±指定した縦幅に対する割合の範囲で左右方向移動
+            # zoom_range = zr,                       # 浮動小数点数または[lower，upper]．ランダムにズームする範囲．浮動小数点数が与えられた場合，[lower, upper] = [1-zoom_range, 1+zoom_range]です．
+            horizontal_flip = hf,                  # 水平方向に入力をランダムに反転するかどうか
+            vertical_flip = vf,                    # 垂直方向に入力をランダムに反転するかどうか
+            # validation_split = val_spilit          # 検証のために予約しておく画像の割合（厳密には0から1の間）
+        )
+    
+    return datagen
 
 
 # モデル構築
@@ -85,7 +107,7 @@ def build_imagenet():
                                 weights="imagenet", 
                                 input_shape=(128,128,3))
     x = GlobalAveragePooling2D()(imagenet_model.layers[-1].output)
-    x = Dense(102, activation="softmax")(x)
+    x = Dense(15, activation="softmax")(x)
 
     # mixed4(132)から先を訓練する
     for i in range(133):
@@ -158,6 +180,10 @@ def main():
     face_images = load_image_npy('D:/Illust/Paimon/interim/npy_face_only/paimon_face.npy')
     food_images = load_image_npy('D:/OpenData/food-101/interim/npy_food-101_64/npy_food-101_64.npy')
 
+    # 255 で割る
+    face_images = face_images / 255
+    food_images = food_images / 255
+
     print(face_images.shape)
     print(food_images.shape)
    
@@ -189,6 +215,7 @@ def main():
 
     labels = ['paimon'] + labels
     print(classification_report(y_test, y_pred, target_names=labels))
+
     cmx = confusion_matrix(y_test, y_pred)
     print(cmx)
 
