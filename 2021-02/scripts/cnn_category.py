@@ -66,12 +66,13 @@ def build_cnn_model():
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Conv2D(256, kernel_size=(3, 3), activation='relu', kernel_initializer='he_normal'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.8))
+    model.add(Dropout(0.25))
 
     model.add(Flatten())
     model.add(Dense(3200, activation='relu',kernel_initializer='he_normal'))  
     model.add(Dense(800, activation='relu', kernel_initializer='he_normal'))  
     model.add(Dense(120, activation='relu', kernel_initializer='he_normal')) 
+    model.add(Dropout(0.5))
     model.add(Dense(15, activation='softmax'))
 
     model.compile(
@@ -88,6 +89,7 @@ def build_cnn_model():
 def build_imagenet():
     # https://github.com/stratospark/food-101-keras
     # https://note.com/matsukoutennis/n/nfaa6b86ddf15
+    # https://qiita.com/koshian2/items/b2d9c03ece95cf5f280a
     base_model = InceptionV3(weights='imagenet', 
                             include_top=False, 
                             input_tensor=Input(shape=(128, 128, 3)))
@@ -113,9 +115,9 @@ def learn_model(model, X_train, y_train, X_val, y_val):
                                 patience=20, 
                                 verbose=1)
     hist = model.fit(X_train, y_train, 
-                    batch_size=1000, 
+                    batch_size=32, 
                     verbose=2, 
-                    steps_per_epoch=X_train.shape[0] // 1000,
+                    steps_per_epoch=X_train.shape[0] // 32,
                     epochs=100, 
                     validation_data=(X_val, y_val), 
                     callbacks=[early_stopping]
@@ -205,13 +207,17 @@ def save_model(path, model):
 
 
 # 評価系のグラフをプロット
-def plot_evaluation(eval_dict, key1, key2, ylabel):
+def plot_evaluation(eval_dict, key1, key2, ylabel, save_path=None):
+    plt.figure(figsize=(10,7))
     plt.plot(eval_dict[key1], label=key1)
     plt.plot(eval_dict[key2], label=key2)
     plt.ylabel(ylabel)
     plt.xlabel('epoch')
     plt.legend()
-    plt.show()
+    if save_path is None:
+        plt.show()
+    else:
+        plt.savefig(save_path)
 
 
 def main():
@@ -219,13 +225,13 @@ def main():
     # print(device_lib.list_local_devices())
 
     face_images = load_image_npy('D:/Illust/Paimon/interim/npy_face_only/paimon_face.npy')
-    food_images = load_image_npy('D:/OpenData/food-101/interim/npy_food-101_64/npy_food-101.npy')/255
+    food_images = load_image_npy('D:/OpenData/food-101/interim/npy_food-101_64/npy_food-101_128.npy')/255
 
     # print(face_images[0])
     # print(food_images[0])
 
-    # resize_num = 128
-    # face_images = np.array([cv2.resize(face_image, (resize_num,resize_num)) for face_image in face_images])
+    resize_num = 128
+    face_images = np.array([cv2.resize(face_image, (resize_num,resize_num)) for face_image in face_images])
     # food_images = np.array([cv2.resize(food_image, (resize_num,resize_num)) for food_image in food_images])
 
     print(face_images.shape)
@@ -250,16 +256,17 @@ def main():
     print(y_test.shape)
 
     # 学習
-    model = build_cnn_model()
-    # model = build_imagenet()
+    # model = build_cnn_model()
+    model = build_imagenet()
 
     hist = learn_model(model, X_train, y_train, X_val, y_val)
     # train_datagen = make_datagen()
     # valid_datagen = ImageDataGenerator()
     # hist = learn_model_generator(model, X_train, y_train, X_val, y_val, train_datagen, valid_datagen)
     
-    plot_evaluation(hist.history, 'loss', 'val_loss', 'loss')
-    plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy')
+    save_file_name = 'v3.png'
+    plot_evaluation(hist.history, 'loss', 'val_loss', 'loss', 'figures/loss_'+save_file_name)
+    plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy', 'figures/acc_'+save_file_name)
 
     y_pred = predict_model(model, X_test)
     y_pred = np.argmax(y_pred, axis=1)
@@ -270,10 +277,11 @@ def main():
     print(cmx)
 
     df_cmx = pd.DataFrame(cmx, index=labels, columns=labels)
-    plt.figure(figsize = (10,7))
+    plt.figure(figsize=(10,7))
     sns.heatmap(df_cmx, annot=True, fmt='d')
     plt.ylim(0, len(labels)+1)
-    plt.show()
+    # plt.show()
+    plt.savefig('figures/cmx_'+save_file_name)
 
 if __name__ == "__main__":
     main()
