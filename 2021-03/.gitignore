@@ -1,1 +1,2 @@
 # data/        # 本当はdataフォルダはignoreする
+.DS_Store
