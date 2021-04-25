@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 import tensorflow.keras as keras
 from tensorflow.keras.models import Sequential, Model
@@ -12,7 +13,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.utils import to_categorical
 
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import precision_score
@@ -128,6 +129,7 @@ def plot_evaluation(eval_dict, key1, key2, ylabel, save_path=None):
 def main():
     # GPUの動作確認
     # print(device_lib.list_local_devices())
+    labels = ['food', 'face']
 
     face_image = load_image_npy('D:/Illust/Paimon/interim/npy_face_only/paimon_face_augmentation.npy')
     food_image = load_image_npy('D:/OpenData/food-101/interim/npy_food-101.npy')
@@ -146,7 +148,8 @@ def main():
         model = build_cnn_model()
         hist = learn_model(model, train_x, train_y)
         
-        save_file_name = 'bin.png'
+        # save_file_name = 'bin.png'
+        save_file_name = None
         plot_evaluation(hist.history, 'loss', 'val_loss', 'loss', save_file_name)
         plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy', save_file_name)
 
@@ -157,7 +160,16 @@ def main():
         y_pred = [1 if y > 0.9 else 0 for y in y_pred.flatten()]
 
         score_list.append(f1_score(y_test, y_pred))
-        print(classification_report(y_test, y_pred, target_names=['food', 'face']))
+        print(classification_report(y_test, y_pred, target_names=labels))
+        cmx = confusion_matrix(y_test, y_pred)
+        print(cmx)
+
+        df_cmx = pd.DataFrame(cmx, index=labels, columns=labels)
+        plt.figure(figsize=(10,7))
+        sns.heatmap(df_cmx, annot=True, fmt='d')
+        plt.ylim(0, len(labels)+1)
+        plt.show()
+        # plt.savefig('figures/cmx_'+save_file_name)
     
     print(score_list)
     print(np.array(score_list).mean())
