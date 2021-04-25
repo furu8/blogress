@@ -113,13 +113,16 @@ def save_model(path, model):
 
 
 # 評価系のグラフをプロット
-def plot_evaluation(eval_dict, key1, key2, ylabel):
+def plot_evaluation(eval_dict, key1, key2, ylabel, save_path=None):
     plt.plot(eval_dict[key1], label=key1)
     plt.plot(eval_dict[key2], label=key2)
     plt.ylabel(ylabel)
     plt.xlabel('epoch')
     plt.legend()
-    plt.show()
+    if save_path is None:
+        plt.show()
+    else:
+        plt.savefig(save_path)
 
 
 def main():
@@ -143,8 +146,9 @@ def main():
         model = build_cnn_model()
         hist = learn_model(model, train_x, train_y)
         
-        plot_evaluation(hist.history, 'loss', 'val_loss', 'loss')
-        plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy')
+        save_file_name = 'bin.png'
+        plot_evaluation(hist.history, 'loss', 'val_loss', 'loss', save_file_name)
+        plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy', save_file_name)
 
         score = evaluate_model(model, X_test, y_test)
         y_pred = predict_model(model, X_test)
