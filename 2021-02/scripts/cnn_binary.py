@@ -101,11 +101,11 @@ def evaluate_model(model, X_test, y_test):
 
 
 def predict_model(model, X_test):
-    y_pred = model.predict(X_test, batch_size=128)
+    pred_y = model.predict(X_test, batch_size=128)
 
-    # y_pred = np.argmax(y_pred, axis=1)
+    # pred_y = np.argmax(pred_y, axis=1)
 
-    return y_pred
+    return pred_y
 
 
 def save_model(path, model):
@@ -115,6 +115,7 @@ def save_model(path, model):
 
 # 評価系のグラフをプロット
 def plot_evaluation(eval_dict, key1, key2, ylabel, save_path=None):
+    plt.figure(figsize=(10,7))
     plt.plot(eval_dict[key1], label=key1)
     plt.plot(eval_dict[key2], label=key2)
     plt.ylabel(ylabel)
@@ -125,11 +126,24 @@ def plot_evaluation(eval_dict, key1, key2, ylabel, save_path=None):
     else:
         plt.savefig(save_path)
 
+    
+def plot_cmx_heatmap(cmx, labels, save_path=None):
+    df_cmx = pd.DataFrame(cmx, index=labels, columns=labels)
+    plt.figure(figsize=(10,7))
+    sns.heatmap(df_cmx, annot=True, fmt='d')
+    plt.ylim(0, len(labels)+1)
+    if save_path is None:
+        plt.show()
+    else:
+        plt.savefig(save_path)
+
+
 
 def main():
     # GPUの動作確認
     # print(device_lib.list_local_devices())
     labels = ['food', 'face']
+    save_file_name = 'bin.png'
 
     face_image = load_image_npy('D:/Illust/Paimon/interim/npy_face_only/paimon_face_augmentation.npy')
     food_image = load_image_npy('D:/OpenData/food-101/interim/npy_food-101.npy')
@@ -147,32 +161,38 @@ def main():
 
         model = build_cnn_model()
         hist = learn_model(model, train_x, train_y)
-        
-        # save_file_name = 'bin.png'
-        save_file_name = None
-        plot_evaluation(hist.history, 'loss', 'val_loss', 'loss', save_file_name)
-        plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy', save_file_name)
 
-        score = evaluate_model(model, X_test, y_test)
-        y_pred = predict_model(model, X_test)
+        score = evaluate_model(model, val_x, val_y)
+        pred_y = predict_model(model, val_x)
 
-        # y_test = np.argmax(y_test, axis=1)
-        y_pred = [1 if y > 0.9 else 0 for y in y_pred.flatten()]
+        # val_y = np.argmax(val_y, axis=1)
+        pred_y = [1 if y > 0.9 else 0 for y in pred_y.flatten()]
 
-        score_list.append(f1_score(y_test, y_pred))
-        print(classification_report(y_test, y_pred, target_names=labels))
-        cmx = confusion_matrix(y_test, y_pred)
+        score_list.append(score)
+        print(classification_report(val_y, pred_y, target_names=labels))
+        cmx = confusion_matrix(val_y, pred_y)
         print(cmx)
 
-        df_cmx = pd.DataFrame(cmx, index=labels, columns=labels)
-        plt.figure(figsize=(10,7))
-        sns.heatmap(df_cmx, annot=True, fmt='d')
-        plt.ylim(0, len(labels)+1)
-        plt.show()
-        # plt.savefig('figures/cmx_'+save_file_name)
+        # plot_cmx_heatmap(cmx, labels)
     
     print(score_list)
     print(np.array(score_list).mean())
+
+    # 再度学習
+    model = build_cnn_model()
+    hist = learn_model(model, X_train, y_train)
+
+    plot_evaluation(hist.history, 'loss', 'val_loss', 'loss', 'figures/loss_'+save_file_name)
+    plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy', 'figures/acc_'+save_file_name)
+
+    y_pred = predict_model(model, X_test)
+    y_pred = [1 if y > 0.9 else 0 for y in y_pred.flatten()]
+
+    print(classification_report(y_test, y_pred, target_names=labels))
+    cmx = confusion_matrix(y_test, y_pred)
+    print(cmx)
+
+    plot_cmx_heatmap(cmx, labels, save_path='figures/cmx_'+save_file_name)
 
 
 if __name__ == "__main__":
