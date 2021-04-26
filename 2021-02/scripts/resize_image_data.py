@@ -35,7 +35,7 @@ for food_image in food_images:
     for img in food_image:
         food_img_list.append(cv2.resize(img, (resize_num,resize_num)))
 
-food_images = np.array(food_img_list)
+food_images = np.array(food_img_list)/255
 print(food_images.shape)
 # food_images = np.array([cv2.resize(food_image, (resize_num,resize_num)) for food_image in food_images])
 
