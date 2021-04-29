@@ -50,6 +50,37 @@ def make_train_test_data(image1, image2, labels):
     return X_train, X_test, y_train, y_test
 
 
+# # モデル構築
+# def build_cnn_model():
+#     '''
+#     初期化 (initializer)
+#     Glorotの初期化法:sigmoid関数やtanh関数
+#     Heの初期化法:ReLU関数
+#     '''
+#     model = Sequential()
+
+#     # 入力画像 64x64x3 (縦の画素数)x(横の画素数)x(チャンネル数)
+#     model.add(Conv2D(16, kernel_size=(5, 5), activation='relu',
+#                     kernel_initializer='he_normal', input_shape=(64, 64, 3)))
+#     model.add(MaxPooling2D(pool_size=(2, 2)))
+#     model.add(Conv2D(64, kernel_size=(5, 5), activation='relu',
+#                     kernel_initializer='he_normal'))
+#     model.add(MaxPooling2D(pool_size=(2, 2)))
+
+#     model.add(Flatten())
+#     model.add(Dense(15, activation='softmax'))
+
+#     model.compile(
+#         loss='categorical_crossentropy',
+#         optimizer='adam',
+#         metrics=['accuracy']
+#     )
+
+#     model.summary()
+
+#     return model
+
+
 # モデル構築
 def build_cnn_model():
     '''
@@ -94,7 +125,7 @@ def build_imagenet():
                             include_top=False, 
                             input_tensor=Input(shape=(128, 128, 3)))
     x = base_model.output
-    # x = AveragePooling2D(pool_size=(8, 8))(x)
+    x = AveragePooling2D(pool_size=(2, 2))(x)
     x = Dropout(.4)(x)
     x = Flatten()(x)
     predictions = Dense(15, activation='softmax')(x)
@@ -225,10 +256,10 @@ def main():
     # print(device_lib.list_local_devices())
 
     face_images = load_image_npy('D:/Illust/Paimon/interim/npy_face_only/paimon_face.npy')
-    food_images = load_image_npy('D:/OpenData/food-101/interim/npy_food-101_64/npy_food-101_128.npy')/255
-
-    # print(face_images[0])
-    # print(food_images[0])
+    food_images = load_image_npy('D:/OpenData/food-101/interim/npy_food-101_64/npy_food-101_128.npy')
+    
+    # print(face_images)
+    # print(food_images)
 
     resize_num = 128
     face_images = np.array([cv2.resize(face_image, (resize_num,resize_num)) for face_image in face_images])
@@ -259,12 +290,12 @@ def main():
     # model = build_cnn_model()
     model = build_imagenet()
 
-    hist = learn_model(model, X_train, y_train, X_val, y_val)
-    # train_datagen = make_datagen()
-    # valid_datagen = ImageDataGenerator()
-    # hist = learn_model_generator(model, X_train, y_train, X_val, y_val, train_datagen, valid_datagen)
+    # hist = learn_model(model, X_train, y_train, X_val, y_val)
+    train_datagen = make_datagen()
+    valid_datagen = ImageDataGenerator()
+    hist = learn_model_generator(model, X_train, y_train, X_val, y_val, train_datagen, valid_datagen)
     
-    save_file_name = 'v3.png'
+    save_file_name = 'v3_aug.png'
     plot_evaluation(hist.history, 'loss', 'val_loss', 'loss', 'figures/loss_'+save_file_name)
     plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy', 'figures/acc_'+save_file_name)
 
