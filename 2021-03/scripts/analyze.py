@@ -10,6 +10,8 @@ from sklearn.preprocessing import LabelEncoder
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from models import Util
+
 # import warnings
 # warnings.simplefilter('ignore', pd.core.common.SettingWithCopyWarning)
 
@@ -129,6 +131,16 @@ for col in cols:
     plt.legend( loc='upper right')
     plt.show()
 
+# %%[markdown]
+# ## 保存
 # %%
-# 保存
+# データ保存
 df.to_csv('../data/processed/all.csv')
+
+# %%
+# 特徴量
+df = df.drop(['PassengerId', 'data'], axis=1)
+df
+# %%
+# 特徴量保存
+Util.dump(df.columns, '../config/features/all.pkl')
