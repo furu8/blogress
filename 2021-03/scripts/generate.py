@@ -35,29 +35,17 @@ display(df.info())
 display(df.describe())
 
 # %%
-print(df['Fare'].mean())
-# %%
 # 欠損補完
 df['Age'] = df['Age'].fillna(df['Age'].mean()) # 29.881137667304014
 df['Embarked'] = df['Embarked'].fillna(df['Embarked'].value_counts().idxmax()) # S
 df['Fare'] = df['Fare'].fillna(df['Fare'].mean()) # 33.295479281345564
  
 # カラム削除
-df = df.drop(['Name', 'Ticket', 'Cabin'], axis=1)
+df = df.drop(['Name', 'Ticket'], axis=1)
 
-display(df)
-display(df.info())
-display(df.describe())
-
-# %%
-# ラベルエンコーディング
-lenc = LabelEncoder()
-
-lenc.fit(df['Sex'])
-df['Sex'] = pd.DataFrame(lenc.transform(df['Sex']))
-
-lenc.fit(df['Embarked'])
-df['Embarked'] = pd.DataFrame(lenc.transform(df['Embarked']))
+# trainとtest
+df.loc[df['Survived']!=-1, 'data'] = 'train'
+df.loc[df['Survived']==-1, 'data'] = 'test'
 
 display(df)
 display(df.info())
@@ -66,3 +54,4 @@ display(df.describe())
 # %%
 # 保存
 df.to_csv('../data/interim/all.csv', index=False)
+# %%
