@@ -12,7 +12,8 @@ logger = Logger()
 
 class Runner:
 
-    def __init__(self, run_name: str, model_cls: Callable[[str, dict], Model], features: List[str], params: dict):
+    # def __init__(self, df, run_name: str, model_cls: Callable[[str, dict], Model], features: List[str], params: dict):
+    def __init__(self, train_x, train_y, run_name: str, model_cls: Callable[[str, dict], Model], params: dict):
         """コンストラクタ
 
         :param run_name: ランの名前
@@ -20,9 +21,12 @@ class Runner:
         :param features: 特徴量のリスト
         :param params: ハイパーパラメータ
         """
+        self.train_x = train_x
+        self.train_y = train_y
+
         self.run_name = run_name
         self.model_cls = model_cls
-        self.features = features
+        # self.features = features
         self.params = params
         self.n_fold = 4
 
@@ -37,8 +41,10 @@ class Runner:
         """
         # 学習データの読込
         validation = i_fold != 'all'
-        train_x = self.load_x_train()
-        train_y = self.load_y_train()
+        # train_x = self.load_x_train()
+        # train_y = self.load_y_train()
+        train_x = self.train_x
+        train_y = self.train_y
 
         if validation:
             # 学習データ・バリデーションデータをセットする
@@ -104,14 +110,14 @@ class Runner:
         # 評価結果の保存
         logger.result_scores(self.run_name, scores)
 
-    def run_predict_cv(self) -> None:
+    def run_predict_cv(self, test_x) -> None:
         """クロスバリデーションで学習した各foldのモデルの平均により、テストデータの予測を行う
 
         あらかじめrun_train_cvを実行しておく必要がある
         """
         logger.info(f'{self.run_name} - start prediction cv')
 
-        test_x = self.load_x_test()
+        # test_x = self.load_x_test()
 
         preds = []
 
@@ -132,6 +138,8 @@ class Runner:
 
         logger.info(f'{self.run_name} - end prediction cv')
 
+        return pred_avg
+
     def run_train_all(self) -> None:
         """学習データすべてで学習し、そのモデルを保存する"""
         logger.info(f'{self.run_name} - start training all')
@@ -143,14 +151,15 @@ class Runner:
 
         logger.info(f'{self.run_name} - end training all')
 
-    def run_predict_all(self) -> None:
+    def run_predict_all(self, test_x) -> None:
         """学習データすべてで学習したモデルにより、テストデータの予測を行う
 
         あらかじめrun_train_allを実行しておく必要がある
         """
         logger.info(f'{self.run_name} - start prediction all')
 
-        test_x = self.load_x_test()
+        # test_x = self.load_x_test()
+        # test_x = self.test_x
 
         # 学習データ全てで学習したモデルで予測を行う
         i_fold = 'all'
@@ -162,6 +171,8 @@ class Runner:
         Util.dump(pred, f'../model/pred/{self.run_name}-test.pkl')
 
         logger.info(f'{self.run_name} - end prediction all')
+
+        return pred
 
     def build_model(self, i_fold: Union[int, str]) -> Model:
         """クロスバリデーションでのfoldを指定して、モデルの作成を行う
@@ -209,7 +220,8 @@ class Runner:
         """
         # 学習データ・バリデーションデータを分けるインデックスを返す
         # ここでは乱数を固定して毎回作成しているが、ファイルに保存する方法もある
-        train_y = self.load_y_train()
+        # train_y = self.load_y_train()
+        train_y = self.train_y
         dummy_x = np.zeros(len(train_y))
         skf = StratifiedKFold(n_splits=self.n_fold, shuffle=True, random_state=71)
         return list(skf.split(dummy_x, train_y))[i_fold]
