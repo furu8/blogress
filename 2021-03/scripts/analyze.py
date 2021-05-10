@@ -72,19 +72,22 @@ df_s = df[df['data']=='train']
 cols = ['Pclass', 'Sex', 'SibSp', 'Parch', 'Embarked']
 for col in cols:
     print(col)
+    plt.figure(figsize=(4,3))
     sns.countplot(x=col, data=df_s, hue=df_s['Survived'])
     plt.legend( loc='upper right')
-    plt.show()
+    # plt.show()
+    plt.savefig(f'../figures/diffSurvived_{col}.png', facecolor="azure", bbox_inches='tight', pad_inches=0)
 
 # %%
 # trainとtestの違い
 cols = ['Pclass', 'Sex', 'SibSp', 'Parch', 'Embarked']
 for col in cols:
     print(col)
+    plt.figure(figsize=(4,3))
     sns.countplot(x=col, data=df, hue=df['data'])
     plt.legend( loc='upper right')
-    plt.show()
-
+    # plt.show()
+    plt.savefig(f'../figures/diffTrainTest_{col}.png', facecolor="azure", bbox_inches='tight', pad_inches=0)
 # %%[markdown]
 # ## 特徴量を追加
 
@@ -92,6 +95,7 @@ for col in cols:
 # 家族人数
 df['Family'] = df['SibSp'] + df['Parch']
 
+# %%
 # ラベルエンコーディング
 lenc = LabelEncoder()
 
@@ -118,18 +122,22 @@ df_s = df[df['data']=='train']
 cols = ['Family', 'Cabin']
 for col in cols:
     print(col)
+    plt.figure(figsize=(4,3))
     sns.countplot(x=col, data=df_s, hue=df_s['Survived'])
     plt.legend( loc='upper right')
-    plt.show()
+    # plt.show()
+    plt.savefig(f'../figures/diffSurvived_{col}.png', facecolor="azure", bbox_inches='tight', pad_inches=0)
 
 # %%
 # trainとtestの違い
 cols = ['Family', 'Cabin']
 for col in cols:
     print(col)
+    plt.figure(figsize=(4,3))
     sns.countplot(x=col, data=df, hue=df['data'])
     plt.legend( loc='upper right')
-    plt.show()
+    # plt.show()
+    plt.savefig(f'../figures/diffTrainTest_{col}.png', facecolor="azure", bbox_inches='tight', pad_inches=0)
 
 # %%[markdown]
 # ## 保存
@@ -144,3 +152,4 @@ df
 # %%
 # 特徴量保存
 Util.dump(df.columns, '../config/features/all.pkl')
+# %%
