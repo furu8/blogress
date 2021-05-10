@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from models import ModelLGB, Runner, Util
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
@@ -40,9 +41,15 @@ def build_lgb(tr_x, tr_y, lgbm, issave=False):
 
 def predict_lgb(te_x, lgbm, objective):
     pred = lgbm.predict(te_x)
+    # plt.hist(pred, bins=50)
+    # plt.show()
+    # pred_median = np.median(pred)
+    # pred_median = np.mean(pred)
+    # print(pred_median)
     if objective == 'multiclass':
         pred = np.argmax(pred, axis=1)
     elif objective == 'binary':
+        # pred = [1 if p > pred_median else 0 for p in pred]
         pred = [1 if p > 0.5 else 0 for p in pred]
 
     return pred
@@ -81,17 +88,23 @@ def main():
 
     # LightGBM
     run_fold_name = 'lgb_all'
+    # params = {
+    #     'max_depth' : 50,
+    #     'num_leaves' : 300,
+    #     'learning_rate' : 0.1,
+    #     'n_estimators': 100,
+    #     'objective':'binary', 
+    #     'metric':'binary_logloss', 
+    #     # 'metric': 'multi_logloss',
+    #     # 'objective': 'multiclass',
+    #     # 'num_class' : 5
+    #    'verbosity': -1
+    # }
+
     params = {
-        'max_depth' : 50,
-        'num_leaves' : 300,
-        'learning_rate' : 0.1,
-        'n_estimators': 100,
-        'objective':'binary', 
-        'metric':'binary_logloss', 
-        # 'metric': 'multi_logloss',
-        # 'objective': 'multiclass',
-        # 'num_class' : 5
-       'verbosity': -1
+          'objective' : 'binary', 
+          'metric' : 'binary_logloss',
+          'verbosity' : -1
     }
     # rub_lgb(train_x, train_y, test_x, test_y, run_fold_name, params)
 
