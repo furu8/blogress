@@ -1,38 +1,14 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from furupy.models import ModelLGB
-from furupy.models import ModelRF
-from furupy.models import ModelLR
-from furupy.models import ModelKNN
-from sklearn.metrics import classification_report
-from sklearn.metrics import confusion_matrix
+from models import ModelLGB, Runner, Util
+from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 import lightgbm as lgb
 
 
-def make_train_test_data(path, features):
-    df = pd.read_csv(path)
-    df = df.loc[df['status']=='linetrace']
-
-    tr_x = df.loc[df['flight_times']<=20, features]
-    tr_y = df.loc[df['flight_times']<=20, 'state_num'].values
-    te_x = df.loc[df['flight_times']>20, features]
-    te_y = df.loc[df['flight_times']>20, 'state_num'].values
-
-    return tr_x, tr_y, te_x, te_y
-
-
-# 部分時系列を作成
-def generate_part_seq(data_list, window):
-    part_seq_list = []
-    for i in range(len(data_list)-window+1):
-        part_seq_list.append(data_list[i:i+window])
-    
-    return part_seq_list
-
-
 # LightGBM
-def rub_lgb(tr_x, tr_y, te_x, te_y, run_fold_name, params, load_path=None):
+def run_lgb(tr_x, tr_y, te_x, te_y, run_fold_name, params, load_path=None):
     lgbm = ModelLGB(run_fold_name, params)
     # 学習
     if load_path is None:
@@ -41,14 +17,18 @@ def rub_lgb(tr_x, tr_y, te_x, te_y, run_fold_name, params, load_path=None):
         lgbm.load_model()
     
     # 予測
-    pred = predict_lgb(te_x, te_y, lgbm)
+    pred = predict_lgb(te_x, lgbm, params['objective'])
 
     # 重要度可視化
     plot_lgb_importance(lgbm)
 
     # 評価
-    print(classification_report(te_y, pred, target_names=['f', 'fccw', 'fcw']))
+    print(classification_report(te_y, pred, target_names=['0', '1']))
     print(confusion_matrix(te_y, pred))
+    acc = accuracy_score(te_y, pred)
+    print(acc)
+
+    return acc
 
 
 def build_lgb(tr_x, tr_y, lgbm, issave=False):
@@ -58,9 +38,12 @@ def build_lgb(tr_x, tr_y, lgbm, issave=False):
         print('saved model')
 
 
-def predict_lgb(te_x, te_y, lgbm):
+def predict_lgb(te_x, lgbm, objective):
     pred = lgbm.predict(te_x)
-    pred = np.argmax(pred, axis=1)
+    if objective == 'multiclass':
+        pred = np.argmax(pred, axis=1)
+    elif objective == 'binary':
+        pred = [1 if p > 0.5 else 0 for p in pred]
 
     return pred
 
@@ -71,64 +54,70 @@ def plot_lgb_importance(lgbm):
     plt.show()
 
 
-# RandomForest
-def run_rf(df):
-    pass
+def run_cv(train_x, train_y, run_fold_name, params):
+    scores = []
+    skf = StratifiedKFold(n_splits=3, shuffle=True, random_state=2021)
+    for tr_idx, va_idx in skf.split(train_x, train_y):
+        tr_x, tr_y = train_x.iloc[tr_idx], train_y.iloc[tr_idx]
+        va_x, va_y = train_x.iloc[va_idx], train_y.iloc[va_idx]
+        score = run_lgb(tr_x, tr_y, va_x, va_y, run_fold_name, params, load_path=None)
+        scores.append(score)
 
-
-# LogisticRegression
-def run_lr(df):
-    pass
-
-
-# k-NearestNeighbors
-def run_knn(df):
-    pass
+    return np.array(scores)
 
 
 def main():
-    features = ['tof', 'ord_yaw',
-       'dif_roll_rad', 'dif_pitch_rad', 'dif_yaw_rad', 'vg_pitch_rad',
-       'vg_roll_rad', 'vg_yaw_rad', 'vg_roll_rad_mean10',
-       'vg_pitch_rad_mean10', 'vg_yaw_rad_mean10', 'agx_ms2', 'agy_ms2',
-       'agz_ms2', 'agx_ms2_mean20', 'agy_ms2_mean20', 'agz_ms2_mean20',
-       'vg_roll_rad_mean10_mean20', 'vg_pitch_rad_mean10_mean20',
-       'vg_yaw_rad_mean10_mean20', 'agx_ms2_std20', 'agy_ms2_std20',
-       'agz_ms2_std20', 'vg_roll_rad_mean10_std20',
-       'vg_pitch_rad_mean10_std20', 'vg_yaw_rad_mean10_std20',
-       'agx_ms2_kurt20', 'agy_ms2_kurt20', 'agz_ms2_kurt20',
-       'vg_roll_rad_mean10_kurt20', 'vg_pitch_rad_mean10_kurt20',
-       'vg_yaw_rad_mean10_kurt20', 'agx_ms2_skew20', 'agy_ms2_skew20',
-       'agz_ms2_skew20', 'vg_roll_rad_mean10_skew20',
-       'vg_pitch_rad_mean10_skew20', 'vg_yaw_rad_mean10_skew20',
-       'agx_ms2_min20', 'agy_ms2_min20', 'agz_ms2_min20',
-       'vg_roll_rad_mean10_min20', 'vg_pitch_rad_mean10_min20',
-       'vg_yaw_rad_mean10_min20', 'agx_ms2_max20', 'agy_ms2_max20',
-       'agz_ms2_max20', 'vg_roll_rad_mean10_max20',
-       'vg_pitch_rad_mean10_max20', 'vg_yaw_rad_mean10_max20',
-       'agx_ms2_median20', 'agy_ms2_median20', 'agz_ms2_median20',
-       'vg_roll_rad_mean10_median20', 'vg_pitch_rad_mean10_median20',
-       'vg_yaw_rad_mean10_median20', 'agx_ms2_rms20', 'agy_ms2_rms20',
-       'agz_ms2_rms20', 'vg_roll_rad_mean10_rms20',
-       'vg_pitch_rad_mean10_rms20', 'vg_yaw_rad_mean10_rms20']
-
-    normal_path = '../data/processed/SE/2021-03-31_point-in-time.csv'
-    # anomaly_path = '../data/processed/SE/2020-12-21_point-in-time_wind.csv'
+    features = Util.load('../config/features/all.pkl')
     
     # データ取得
-    train_x, train_y, test_x, test_y = make_train_test_data(normal_path, features)
+    df = pd.read_csv('../data/processed/all.csv')
+    train_df = df[df['data']=='train'].reset_index(drop=True)
+    test_df = df[df['data']=='test'].reset_index(drop=True)
+
+    train_x = train_df[features]
+    train_y = train_df['Survived']
+    test_x = test_df[features]
+    test_y = test_df['Survived']
 
     # LightGBM
-    run_fold_name = 'lgb_1'
+    run_fold_name = 'lgb_all'
     params = {
-        'num_leaves' : 31,
+        'max_depth' : 50,
+        'num_leaves' : 300,
         'learning_rate' : 0.1,
-        'metric': 'multi_logloss',
-        'objective': 'multiclass',
-        'num_class' : 5
+        'n_estimators': 100,
+        'objective':'binary', 
+        'metric':'binary_logloss', 
+        # 'metric': 'multi_logloss',
+        # 'objective': 'multiclass',
+        # 'num_class' : 5
+       'verbosity': -1
     }
-    rub_lgb(train_x, train_y, test_x, test_y, run_fold_name, params)
+    # rub_lgb(train_x, train_y, test_x, test_y, run_fold_name, params)
 
+    scores = run_cv(train_x, train_y, run_fold_name, params)
+    print(scores)
+    print(scores.mean())
+
+    # runner = Runner(train_x, train_y, 'lgb', ModelLGB, params)
+    # runner.run_train_cv()
+    # pred = runner.run_predict_cv(test_x)
+    # pred_y = [1 if p > 0.5 else 0 for p in pred]
+    # # print(pred_y)
+
+    # pred_util = Util.load('../model/pred/lgb-train.pkl')
+    # pred_util_y = [1 if p > 0.5 else 0 for p in pred_util]
+
+    # print(len(pred_util_y), len(train_y))
+
+    # # 評価
+    # print(classification_report(train_y, pred_util_y, target_names=['0', '1']))
+
+    # # 全体
+    # # runner = Runner(train_x, train_y, 'lgb', ModelLGB, params)
+    # # runner.run_train_all()
+    # # pred = runner.run_predict_all(test_x)
+    # # Submission.create_submission('lgb')
 
 
 if __name__ == "__main__":
