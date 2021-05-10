@@ -23,7 +23,7 @@ df.head()
 # %%[markdown]
 # ## 初期の可視化
 
-# # %%
+# %%
 # # 関数
 # def plot_bar(df1, df2, col, xlabels):
 #     left = df1[col].value_counts(sort=False) / len(df1)
@@ -139,7 +139,7 @@ df.to_csv('../data/processed/all.csv')
 
 # %%
 # 特徴量
-df = df.drop(['PassengerId', 'data'], axis=1)
+df = df.drop(['PassengerId', 'data', 'Survived'], axis=1)
 df
 # %%
 # 特徴量保存
