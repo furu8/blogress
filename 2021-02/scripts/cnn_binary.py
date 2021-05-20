@@ -168,7 +168,7 @@ def main():
         # val_y = np.argmax(val_y, axis=1)
         pred_y = [1 if y > 0.9 else 0 for y in pred_y.flatten()]
 
-        score_list.append(score)
+        score_list.append(score[1])
         print(classification_report(val_y, pred_y, target_names=labels))
         cmx = confusion_matrix(val_y, pred_y)
         print(cmx)
