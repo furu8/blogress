@@ -89,7 +89,7 @@ def main():
     train_x = train_df[features]
     train_y = train_df['Survived']
     test_x = test_df[features]
-    test_y = test_df['Survived']
+    # test_y = test_df['Survived']
 
     # LightGBM
     run_name = 'lgb'
@@ -116,6 +116,20 @@ def main():
     scores = run_cv(train_x, train_y, run_name, params)
     print(scores)
     print(scores.mean())
+
+    # 全体で再度学習
+    run_fold_name = f'{run_name}-all'
+    lgbm_all = ModelLGB(run_fold_name, params)
+    build_lgb(train_x, train_y, lgbm_all)
+    pred = predict_lgb(test_x, lgbm_all, params['objective'])
+    plot_lgb_importance(lgbm_all)
+
+    left = df.loc[df['data']=='test', 'PassengerId'].reset_index(drop=True)
+    right = pd.DataFrame(pred, columns=['Survived'])
+    sub_df = pd.concat([left, right], axis=1)
+    
+    print(sub_df)
+    sub_df.to_csv(f'../data/submission/{run_fold_name}.csv', index=False)
 
     # runner = Runner(train_x, train_y, 'lgb', ModelLGB, params)
     # runner.run_train_cv()
