@@ -14,6 +14,7 @@ def run_lgb(tr_x, tr_y, te_x, te_y, run_fold_name, params, load_path=None):
     # 学習
     if load_path is None:
         build_lgb(tr_x, tr_y, lgbm)
+        lgbm.save_model()
     else:
         lgbm.load_model()
     
@@ -61,14 +62,18 @@ def plot_lgb_importance(lgbm):
     plt.show()
 
 
-def run_cv(train_x, train_y, run_fold_name, params):
+def run_cv(train_x, train_y, run_name, params):
+    i = 0
     scores = []
     skf = StratifiedKFold(n_splits=3, shuffle=True, random_state=2021)
     for tr_idx, va_idx in skf.split(train_x, train_y):
+        run_fold_name = f'{run_name}-{i}'
         tr_x, tr_y = train_x.iloc[tr_idx], train_y.iloc[tr_idx]
         va_x, va_y = train_x.iloc[va_idx], train_y.iloc[va_idx]
+        
         score = run_lgb(tr_x, tr_y, va_x, va_y, run_fold_name, params, load_path=None)
         scores.append(score)
+        i+=1
 
     return np.array(scores)
 
@@ -87,7 +92,7 @@ def main():
     test_y = test_df['Survived']
 
     # LightGBM
-    run_fold_name = 'lgb_all'
+    run_name = 'lgb'
     # params = {
     #     'max_depth' : 50,
     #     'num_leaves' : 300,
@@ -108,7 +113,7 @@ def main():
     }
     # rub_lgb(train_x, train_y, test_x, test_y, run_fold_name, params)
 
-    scores = run_cv(train_x, train_y, run_fold_name, params)
+    scores = run_cv(train_x, train_y, run_name, params)
     print(scores)
     print(scores.mean())
 
