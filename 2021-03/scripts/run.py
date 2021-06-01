@@ -79,7 +79,7 @@ def run_cv(train_x, train_y, run_name, params):
 
 
 def main():
-    features = Util.load('../config/features/all.pkl')
+    features = Util.load('config/features/all.pkl')
     
     # データ取得
     df = pd.read_csv('../data/processed/all.csv')

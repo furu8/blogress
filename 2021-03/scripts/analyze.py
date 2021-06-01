@@ -151,5 +151,5 @@ df = df.drop(['PassengerId', 'data', 'Survived'], axis=1)
 df
 # %%
 # 特徴量保存
-Util.dump(df.columns, '../config/features/all.pkl')
+Util.dump(df.columns, 'config/features/all.pkl')
 # %%
