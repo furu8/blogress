@@ -8,11 +8,13 @@ tokyo_df = pd.read_csv('data/weather_tokyo.csv')
 osaka_df = pd.read_csv('data/weather_osaka.csv')
 takamatsu_df = pd.read_csv('data/weather_takamatsu.csv')
 hiroshima_df = pd.read_csv('data/weather_hiroshima.csv')
+naha_df = pd.read_csv('data/weather_naha.csv')
 
 display(tokyo_df.head())
 display(osaka_df.head())
 display(takamatsu_df.head())
 display(hiroshima_df.head())
+display(naha_df.head())
 
 # %%
 # 年毎に抽出し保存
@@ -31,3 +33,7 @@ save_extracted_year(tokyo_df, year_list, city='tokyo')
 save_extracted_year(osaka_df, year_list, city='osaka')
 save_extracted_year(takamatsu_df, year_list, city='takamatsu')
 save_extracted_year(hiroshima_df, year_list, city='hiroshima')
+
+# %%
+# 那覇を2019年だけに
+save_extracted_year(naha_df, [2019], city='naha')
