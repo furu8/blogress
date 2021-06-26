@@ -24,16 +24,17 @@ def save_extracted_year(df, year_list, city='tokyo'):
         if not os.path.exists(f'data/{year}'):
             # ディレクトリが存在しない場合、ディレクトリを作成する
             os.makedirs(f'data/{year}')
-        oneyear_df.to_csv(f'data/{year}/weather_{city}.csv', index=False)
+        oneyear_df.to_csv(f'data/{year}/{city}.csv', index=False)
 
 
 # %%
 year_list = [2016, 2017, 2018, 2019]
-save_extracted_year(tokyo_df, year_list, city='tokyo')
-save_extracted_year(osaka_df, year_list, city='osaka')
-save_extracted_year(takamatsu_df, year_list, city='takamatsu')
-save_extracted_year(hiroshima_df, year_list, city='hiroshima')
+save_extracted_year(tokyo_df, year_list, city='東京')
+save_extracted_year(osaka_df, year_list, city='大阪')
+save_extracted_year(takamatsu_df, year_list, city='高松')
+save_extracted_year(hiroshima_df, year_list, city='広島')
 
 # %%
 # 那覇を2019年だけに
-save_extracted_year(naha_df, [2019], city='naha')
+save_extracted_year(naha_df, [2019], city='那覇')
+# %%
