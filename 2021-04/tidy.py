@@ -13,7 +13,7 @@ def add_digits(df, col):
 
 # %%
 # ロード
-df = pd.read_csv('data/data.csv')
+df = pd.read_csv('data/data_naha.csv')
 df
 
 # %%
@@ -37,4 +37,5 @@ df = df.reindex(columns=['年', '月', '日', '曜日', '平均気温', '最高�
 df
 # %%
 # セーブ
-df.to_csv('data/weather_hiroshima.csv', index=False)
+df.to_csv('data/weather_naha.csv', index=False)
+# %%
