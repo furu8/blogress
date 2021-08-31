@@ -4,17 +4,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Input, Dense
+from tensorflow.keras.layers import Dense
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.optimizers import RMSprop
 
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Activation, LSTM
+from tensorflow.keras.layers import Dense, LSTM
 
 import math
 from sklearn.metrics import mean_squared_error
@@ -44,7 +43,7 @@ def act_minxmax_scaler(df):
 
     return mc_list, scaler
 
-# 部分時系列の作成
+# データ準備
 def split_part_recurrent_data(data_list, look_back):
     X, Y = [], []
     for i in range(len(data_list)-look_back-1):
@@ -55,14 +54,14 @@ def split_part_recurrent_data(data_list, look_back):
 
 def create_lstm(look_back):
     model = Sequential()
-    model.add(LSTM(16, input_shape=(look_back, 1))) # input_shape=(系列長T, x_tの次元), output_shape=(units,)
+    model.add(LSTM(4, input_shape=(look_back, 1))) # input_shape=(系列長T, x_tの次元), output_shape=(units,)
     model.add(Dense(1))
 
     model.compile(loss='mean_squared_error', optimizer='adam')
 
     return model
 
-# オートエンコーダ実行
+# LSTM学習
 def act_lstm(model, train_x, train_y, batch_size, epochs):
     train_x, val_x, train_y, val_y = train_test_split(train_x, train_y, 
                                                         test_size=0.25, 
@@ -91,7 +90,7 @@ def plot_evaluation(eval_dict, col1, col2, xlabel, ylabel):
     plt.ylabel(ylabel)
     plt.xlabel(xlabel)
     plt.legend()
-    # plt.show()
+    plt.show()
 
 # %%
 df = pd.read_csv('ecg.csv')
@@ -156,12 +155,15 @@ display(pd.DataFrame(train_x))
 display(pd.DataFrame(train_y))
 
 # %%
+print(train_x.shape)
+print(test_x.shape)
+
 # [samples, time steps, features]へ変形
 train_x = np.reshape(train_x, (train_x.shape[0], train_x.shape[1], 1))
 test_x = np.reshape(test_x, (test_x.shape[0], test_x.shape[1], 1))
 
 print(train_x.shape)
-print(test_y.shape)
+print(test_x.shape)
 # %%
 # モデル作成
 model = create_lstm(look_back)
@@ -170,7 +172,7 @@ model
 # GPUの動作確認
 # print(device_lib.list_local_devices())
 batch_size = 100
-epochs = 30
+epochs = 100
 
 # モデル実行
 model, hist = act_lstm(model, train_x, train_y, batch_size, epochs)
@@ -180,6 +182,7 @@ model, hist = act_lstm(model, train_x, train_y, batch_size, epochs)
 train_pred = model.predict(train_x)
 test_pred = model.predict(test_x)
 
+# %%
 # 正規化を元に戻す
 trainPredict = train_scaler.inverse_transform(train_pred)
 trainY = train_scaler.inverse_transform([train_y])
@@ -196,13 +199,45 @@ print('Test RMSE: %.2f' % (testScore))
 # 誤差の収束具合を描画
 # val_lossよりlossが大きければ未学習を疑え
 plot_evaluation(hist.history, 'loss', 'val_loss', 'epoch', 'loss')
-# plt.savefig('figure/4_eval_loss.png')
+plt.savefig('eval_loss.png')
+
+# %%
+plt.figure(figsize=(20,4))
+plt.plot(testY[0])
+plt.plot(testPredict)
+plt.show()
 
 # %%
 plt.figure(figsize=(20,4))
 plt.plot(test_y)
 plt.plot(test_pred)
-plt.show()
+# plt.show()
+plt.savefig('real_pred_plot.png')
+
+# %%
+# 予測誤差（異常スコア）の計算
+dist = test_y - test_pred[:,0]
+u_dist = pow(dist, 2)
+u_dist = u_dist / np.max(u_dist)
+
+# %%
+plt.figure(figsize=(20,4))
+plt.plot(test_y)
+plt.plot(u_dist, color='tab:red')
+plt.savefig('anomaly_score.png')
+# %%
+# 予測誤差（異常スコア）の計算
+dist = testY[0] - testPredict.flatten()
+u_dist = pow(dist, 2)
+u_dist = u_dist / np.max(u_dist)
+u_dist
+# %%
+plt.figure(figsize=(20,4))
+plt.plot(u_dist)
+# plt.plot(test_y)
+
+# %%
+plt.hist(u_dist)
 
 # %%
 def Mahalanobis_dist(x):
@@ -213,12 +248,6 @@ def Mahalanobis_dist(x):
     d = np.sqrt(np.sum(d, axis=1))
     d /= np.max(d)
     return d
-
-# %%
-# 予測誤差（異常スコア）の計算
-dist = test_y - test_pred[:,0]
-u_dist = pow(dist, 2)
-u_dist = u_dist / np.max(u_dist)
 
 # %%
 data = np.stack([test_y, test_pred[:,0]])
@@ -233,8 +262,7 @@ plt.figure(figsize=(20,4))
 # plt.plot(u_dist)
 plt.plot(m_dist)
 plt.plot(test_y)
-# %%
-plt.hist(u_dist)
+
 
 # %%
 plt.hist(m_dist)
