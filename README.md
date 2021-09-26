@@ -5,6 +5,6 @@
 - ブログにまとめた内容を記録
 - 毎月新しい内容を勉強し、まとめる
 
-## ブログUEL
+## ブログURL
 
 https://noleff.hatenablog.com/
