@@ -1,4 +1,5 @@
 # %%
+from operator import sub
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -62,7 +63,7 @@ for sensor in sensors:
     subsequences = make_subsequences(df_std, sensor, window)
     kmeans.fit_predict(subsequences)
     centers = scaler.fit_transform(kmeans.cluster_centers_)
-
+    
     plt.figure(figsize=(20,4))
     plt.title(sensor)
     plt.plot(centers[0], label='cluster1')
@@ -77,8 +78,9 @@ from glob import glob
 path_list = glob('data/*')
 new_df = pd.DataFrame()
 
-for path in path_list:
+for i, path in enumerate(path_list):
     df = pd.read_csv(path)
+    df['ID'] = i
     new_df = pd.concat([new_df, df], axis=0)
 
 new_df = new_df.reset_index(drop=True)
@@ -87,13 +89,23 @@ new_df
 # %%
 new_df_std = scaler(new_df, sensors)
 new_df_std
+
+# %%
+new_df_std = pd.concat([new_df_std, new_df[['ID']]], axis=1)
+new_df_std
+
 # %%
 k = 3
 kmeans = KMeans(n_clusters=k, random_state=2021)
 scaler = StandardScaler()
 
 for sensor in sensors:
-    subsequences = make_subsequences(new_df_std, sensor, window)
+    subsequences = np.empty((0, window))
+    for i in range(new_df_std['ID'].max()+1):
+        one_df = new_df_std[new_df_std['ID']==i]
+        one_subsequences = make_subsequences(one_df, sensor, window)
+        subsequences = np.append(subsequences, one_subsequences, axis=0)
+    print(subsequences.shape)
     kmeans.fit_predict(subsequences)
     centers = scaler.fit_transform(kmeans.cluster_centers_)
 
@@ -104,4 +116,4 @@ for sensor in sensors:
     plt.plot(centers[2], label='cluster3')
     plt.legend(loc='upper right')
     # plt.show()
-    plt.savefig(f'figure/new_kmeans_{sensor}.png', facecolor="azure", bbox_inches='tight', pad_inches=0)
+    plt.savefig(f'figure/new_kmeans_fixed_{sensor}.png', facecolor="azure", bbox_inches='tight', pad_inches=0)
