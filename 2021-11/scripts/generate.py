@@ -84,11 +84,11 @@ save_npy_image(save_pokemon_path, pokemon_image_list)
 # %%
 ###############################################################
 # flowers
-daisy_path_list = gb.glob('D:/OpenData/flowers/daisy/*')
-dandelion_path_list = gb.glob('D:/OpenData/flowers/dandelion/*')
-rose_path_list = gb.glob('D:/OpenData/flowers/rose/*')
-sunflower_path_list = gb.glob('D:/OpenData/flowers/sunflower/*')
-tulip_path_list = gb.glob('D:/OpenData/flowers/tulip/*')
+daisy_path_list = gb.glob('D:/OpenData/flowers/raw/daisy/*')
+dandelion_path_list = gb.glob('D:/OpenData/flowers/raw/dandelion/*')
+rose_path_list = gb.glob('D:/OpenData/flowers/raw/rose/*')
+sunflower_path_list = gb.glob('D:/OpenData/flowers/raw/sunflower/*')
+tulip_path_list = gb.glob('D:/OpenData/flowers/raw/tulip/*')
 
 # %%
 # daisy_image_list = load_images(daisy_path_list, isshow=True)
