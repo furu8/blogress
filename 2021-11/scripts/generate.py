@@ -31,7 +31,7 @@ def extract_sinnoh(pokemon_path_list):
             # print(number)
             sinnoh_pokemon_path_list.append(pokemon)
 
-    return sinnoh_pokemon_path_list
+    return np.array(sinnoh_pokemon_path_list)
 
 
 def load_images(image_path_list, ispokemon=False, isshow=False):
@@ -60,7 +60,7 @@ def load_images(image_path_list, ispokemon=False, isshow=False):
 
         npy_image_list.append(img_npy)
 
-    return npy_image_list
+    return np.array(npy_image_list)
 
 def save_npy_image(save_path, images):
     np.save(save_path, images)
@@ -74,10 +74,12 @@ sinnoh_pokemon_path_list
 # %%
 # pokemon_image_list = load_images(sinnoh_pokemon_path_list, ispokemon=True, isshow=True)
 pokemon_image_list = load_images(sinnoh_pokemon_path_list, ispokemon=True, isshow=False)
-np.array(pokemon_image_list).shape
+pokemon_image_list.shape
 
 # %%
 # 保存
+save_pokemon_path = 'D:/OpenData/pokemon_dataset/Pokemon-Images-Dataset/npy/pokemon_sinnoh_128.npy'
+save_npy_image(save_pokemon_path, pokemon_image_list)
 
 # %%
 ###############################################################
@@ -89,11 +91,11 @@ sunflower_path_list = gb.glob('D:/OpenData/flowers/sunflower/*')
 tulip_path_list = gb.glob('D:/OpenData/flowers/tulip/*')
 
 # %%
-daisy_image_list = load_images(daisy_path_list, isshow=True)
-dandelion_image_list = load_images(dandelion_path_list, isshow=True)
-rose_image_list = load_images(rose_path_list, isshow=True)
-sunflower_image_list = load_images(sunflower_path_list, isshow=True)
-tulip_image_list = load_images(tulip_path_list, isshow=True)
+# daisy_image_list = load_images(daisy_path_list, isshow=True)
+# dandelion_image_list = load_images(dandelion_path_list, isshow=True)
+# rose_image_list = load_images(rose_path_list, isshow=True)
+# sunflower_image_list = load_images(sunflower_path_list, isshow=True)
+# tulip_image_list = load_images(tulip_path_list, isshow=True)
 
 # %%
 daisy_image_list = load_images(daisy_path_list)
@@ -101,14 +103,20 @@ dandelion_image_list = load_images(dandelion_path_list)
 rose_image_list = load_images(rose_path_list)
 sunflower_image_list = load_images(sunflower_path_list)
 tulip_image_list = load_images(tulip_path_list)
-print(np.array(daisy_image_list).shape)
-print(np.array(dandelion_image_list).shape)
-print(np.array(rose_image_list).shape)
-print(np.array(sunflower_image_list).shape)
-print(np.array(tulip_image_list).shape)
+print(daisy_image_list)
+print(dandelion_image_list)
+print(rose_image_list)
+print(sunflower_image_list)
+print(tulip_image_list)
 
 # %%
 # 保存
+save_npy_image('D:/OpenData/flowers/npy/daisy_128.npy', daisy_image_list)
+save_npy_image('D:/OpenData/flowers/npy/dandelion_128.npy', dandelion_image_list)
+save_npy_image('D:/OpenData/flowers/npy/rose_128.npy', rose_image_list)
+save_npy_image('D:/OpenData/flowers/npy/sunflower_128.npy', sunflower_image_list)
+save_npy_image('D:/OpenData/flowers/npy/tulip_128.npy', tulip_image_list)
+
 # %%
 ###############################################################
 # cifar-100-python <-低画質(32x32)なので断念
@@ -140,7 +148,9 @@ print(np.array(tulip_image_list).shape)
 fruit_vegetable_path_list = gb.glob('D:/OpenData/Fruit-and-Vegetable-Image-Recognition/train/*/*') 
 fruit_vegetable_path_list
 # %%
-# fruit_vegetable_image_list = load_images(fruit_vegetable_path_list, isshow=True)
-fruit_vegetable_image_list = load_images(fruit_vegetable_path_list, isshow=False)
-np.array(fruit_vegetable_image_list).shape
+fruit_vegetable_image_list = load_images(fruit_vegetable_path_list, isshow=True)
+# fruit_vegetable_image_list = load_images(fruit_vegetable_path_list, isshow=False)
+# fruit_vegetable_image_list
 # %%
+# 保存
+save_npy_image('D:/OpenData/Fruit-and-Vegetable-Image-Recognition/npy/fruit_vegetable_128.npy', fruit_vegetable_image_list)
