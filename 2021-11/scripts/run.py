@@ -68,6 +68,8 @@ def build_model(out_shape):
 
     return model
 
+
+
 # 画像の水増し
 def make_datagen(rr=30, wsr=0.1, hsr=0.1, zr=0.2, val_spilit=0.2, hf=True, vf=True):
     datagen = ImageDataGenerator(
@@ -137,9 +139,20 @@ def plot_evaluation(eval_dict, key1, key2, ylabel, save_path=None):
     else:
         plt.savefig(save_path)
 
+def plot_cmx_heatmap(cmx, labels, save_path=None):
+    df_cmx = pd.DataFrame(cmx, index=labels, columns=labels)
+    plt.figure(figsize=(10,7))
+    sns.heatmap(df_cmx, annot=True, fmt='d')
+    plt.ylim(0, len(labels)+1)
+    if save_path is None:
+        plt.show()
+    else:
+        plt.savefig(save_path)
+
 def run_cv(X, y, labels):
     score_list = []
-    kf = StratifiedKFold(n_splits=2, shuffle=True, random_state=2021)
+    kf = StratifiedKFold(n_splits=3, shuffle=True, random_state=2021)
+    i = 0
 
     for train_idx, val_idx in kf.split(X, y):
         X_train, x_val = X[train_idx], X[val_idx]
@@ -155,19 +168,19 @@ def run_cv(X, y, labels):
         model = build_model(len(labels))
         hist = learn_model(model, X_train, y_train_onehot, x_val, y_val_onehot)
 
-        score = evaluate_model(model, y_train_onehot, y_val_onehot)
+        score = evaluate_model(model, x_val, y_val_onehot)
         y_pred = predict_model(model, x_val)
         y_pred = np.argmax(y_pred, axis=1)
 
-        plot_evaluation(hist.history, 'loss', 'val_loss', 'loss')
-        plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy')
+        plot_evaluation(hist.history, 'loss', 'val_loss', 'loss', f'../figure/loss_{i}')
+        plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy', f'../figure/acc_{i}')
 
         score_list.append(score[1])
         print(classification_report(y_val, y_pred, target_names=labels))
         cmx = confusion_matrix(y_val, y_pred)
         print(cmx)
-
-        # plot_cmx_heatmap(cmx, labels)
+        plot_cmx_heatmap(cmx, labels, f'../figure/cmx_{i}')
+        i += 1
     
     print(score_list)
     print(np.array(score_list).mean())
