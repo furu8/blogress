@@ -7,6 +7,7 @@ import cv2
 import seaborn as sns
 import matplotlib.pyplot as plt
 import re
+import joblib
 
 import tensorflow.keras as keras
 from tensorflow.keras.models import Sequential, Model
@@ -68,7 +69,42 @@ def build_model(out_shape):
 
     return model
 
+# モデル構築
+# def build_model(out_shape):
+#     '''
+#     初期化 (initializer)
+#     Glorotの初期化法:sigmoid関数やtanh関数
+#     Heの初期化法:ReLU関数
+#     https://ichi.pro/zukai-10-ko-no-cnn-a-kitekucha-164752979288397
+#     '''
+#     model = Sequential()
 
+#     # 入力画像 128x128x3 (縦の画素数)x(横の画素数)x(チャンネル数)
+#     model.add(Conv2D(16, kernel_size=(5, 5), activation='relu', kernel_initializer='he_normal', input_shape=(128, 128, 3)))
+#     model.add(MaxPooling2D(pool_size=(3, 3)))
+#     model.add(Conv2D(64, kernel_size=(5, 5), activation='relu', kernel_initializer='he_normal'))
+#     model.add(MaxPooling2D(pool_size=(3, 3)))
+#     model.add(Conv2D(256, kernel_size=(3, 3), activation='relu', kernel_initializer='he_normal'))
+#     model.add(MaxPooling2D(pool_size=(2, 2)))
+#     model.add(Dropout(0.4))
+
+#     model.add(Flatten())
+#     model.add(Dense(2560, activation='relu',kernel_initializer='he_normal'))
+#     model.add(Dropout(0.2))  
+#     model.add(Dense(640, activation='relu', kernel_initializer='he_normal'))  
+#     model.add(Dense(128, activation='relu', kernel_initializer='he_normal')) 
+#     model.add(Dropout(0.2))
+#     model.add(Dense(out_shape, activation='softmax'))
+
+#     model.compile(
+#         loss='categorical_crossentropy',
+#         optimizer='adam',
+#         metrics=['accuracy']
+#     )
+
+#     model.summary()
+
+#     return model
 
 # 画像の水増し
 def make_datagen(rr=30, wsr=0.1, hsr=0.1, zr=0.2, val_spilit=0.2, hf=True, vf=True):
@@ -224,8 +260,12 @@ X, y = make_dataset(daisy, dandelion, rose, sunflower, tulip, fruit_vegetable, f
 print(X.shape)
 print(y.shape)
 # %%
-%%time
-run_cv(X, y, labels)
+# %%time
+# run_cv(X, y, labels)
+
+
+# %%
+joblib.dump(model, 'model/base.model', compress=True)
+
 # %%
 print(device_lib.list_local_devices())
-# %%
