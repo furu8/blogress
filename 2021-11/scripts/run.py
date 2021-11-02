@@ -7,10 +7,9 @@ import cv2
 import seaborn as sns
 import matplotlib.pyplot as plt
 import re
-import joblib
 
 import tensorflow.keras as keras
-from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.models import Sequential, Model, load_model
 from tensorflow.keras.layers import AveragePooling2D, Dense, Conv2D, MaxPooling2D, Flatten, Input, Activation, add, Add, Dropout, BatchNormalization
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.callbacks import EarlyStopping
@@ -19,8 +18,6 @@ from tensorflow.keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix,  accuracy_score, recall_score, precision_score, f1_score
 from sklearn.model_selection import StratifiedKFold
-from tensorflow.keras.models import load_model
-from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.applications import InceptionV3
 from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img, save_img, img_to_array, array_to_img 
 
@@ -127,12 +124,7 @@ def make_datagen(rr=30, wsr=0.1, hsr=0.1, zr=0.2, val_spilit=0.2, hf=True, vf=Tr
     
     return datagen
 
-def learn_model(model, X_train, y_train, X_val, y_val):
-    print(X_train.shape)
-    print(y_train.shape)
-    print(X_val.shape)
-    print(y_val.shape)
-
+def learn_model(model, X_train, y_train, X_val=None, y_val=None):
     tr_datagen = make_datagen()       # 学習データだけ水増し
     va_datagen = ImageDataGenerator() # 検証データは水増ししない
 
@@ -141,7 +133,14 @@ def learn_model(model, X_train, y_train, X_val, y_val):
                                 patience=20, 
                                 verbose=1)
 
-    hist = model.fit_generator(tr_datagen.flow(X_train, y_train, batch_size=32), 
+    if X_val is None:
+        hist = model.fit_generator(tr_datagen.flow(X_train, y_train, batch_size=32), 
+                                verbose=2, 
+                                steps_per_epoch=X_train.shape[0] // 32,
+                                epochs=100, 
+                            )
+    else:
+        hist = model.fit_generator(tr_datagen.flow(X_train, y_train, batch_size=32), 
                                 verbose=2, 
                                 steps_per_epoch=X_train.shape[0] // 32,
                                 epochs=100, 
@@ -226,46 +225,109 @@ pokemon = load_npy_image('D:/OpenData/pokemon_dataset/Pokemon-Images-Dataset/npy
 pokemon.shape
 
 # %%
-# 花
-daisy = load_npy_image('D:/OpenData/flowers/npy/daisy_128.npy')
-dandelion = load_npy_image('D:/OpenData/flowers/npy/dandelion_128.npy')
-rose = load_npy_image('D:/OpenData/flowers/npy/rose_128.npy')
-sunflower = load_npy_image('D:/OpenData/flowers/npy/sunflower_128.npy')
-tulip = load_npy_image('D:/OpenData/flowers/npy/tulip_128.npy')
-print(daisy.shape)
-print(dandelion.shape)
-print(rose.shape)
-print(sunflower.shape)
-print(tulip.shape)
+# シンホウ地方だけに抽出
+def extract_sinnoh(pokemon_path_list):
+    """
+    387~493
+    ナエトル~アルセウス
+    """
+    sinnoh_pokemon_list = []
+    for pokemon in pokemon_path_list:
+        # print(pokemon)
+
+        # 数字だけにファイル名を頑張って除去
+        number = int(re.sub(r'[f]', '', (pokemon.split('\\')[1].split('.')[0].split('-')[0])))
+        pokemon = re.sub(r'[f]', '', (pokemon.split('\\')[1].split('.')[0]))
+        
+        # シンホウ地方
+        if number >= 387 and number <= 493:
+            # print(number)
+            sinnoh_pokemon_list.append(pokemon)
+
+    return np.array(sinnoh_pokemon_list)
 # %%
-# 果物と野菜
-fruit_vegetable = load_npy_image('D:/OpenData/Fruit-and-Vegetable-Image-Recognition/npy/fruit_vegetable_128.npy')
-fruit_vegetable.shape
+pokemon_path_list = gb.glob('D:/OpenData/pokemon_dataset/Pokemon-Images-Dataset/pokemon/*')
+sinnoh_pokemon_list = extract_sinnoh(pokemon_path_list)
+sinnoh_pokemon_list.shape
+
+# # %%
+# # 花
+# daisy = load_npy_image('D:/OpenData/flowers/npy/daisy_128.npy')
+# dandelion = load_npy_image('D:/OpenData/flowers/npy/dandelion_128.npy')
+# rose = load_npy_image('D:/OpenData/flowers/npy/rose_128.npy')
+# sunflower = load_npy_image('D:/OpenData/flowers/npy/sunflower_128.npy')
+# tulip = load_npy_image('D:/OpenData/flowers/npy/tulip_128.npy')
+# print(daisy.shape)
+# print(dandelion.shape)
+# print(rose.shape)
+# print(sunflower.shape)
+# print(tulip.shape)
+# # %%
+# # 果物と野菜
+# fruit_vegetable = load_npy_image('D:/OpenData/Fruit-and-Vegetable-Image-Recognition/npy/fruit_vegetable_128.npy')
+# fruit_vegetable.shape
+
+# # %%
+# # ユニークラベル
+# flowers_labels = [re.split('[\\\.]',path)[-1] for path in gb.glob('D:/OpenData/flowers/raw/*')]
+# flowers_labels
+# # %%
+# fruit_vegetable_labels = [re.split('[\\\.]',path)[-1] for path in gb.glob('D:/OpenData/Fruit-and-Vegetable-Image-Recognition/train/*')]
+# fruit_vegetable_labels
+# # %%
+# labels = flowers_labels + fruit_vegetable_labels
+# print(len(labels))
+# labels
+
+# # %%
+# # データ準備
+# X, y = make_dataset(daisy, dandelion, rose, sunflower, tulip, fruit_vegetable, fruit_vegetable_labels)
+# print(X.shape)
+# print(y.shape)
+# # %%
+# X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.25, shuffle=True, random_state=2021)
+
+# # %%time
+# # run_cv(X, y, labels)
+
+# # %%
+# # ラベルをOne-Hotに変換
+# y_onehot_train = to_categorical(y_train)
+# y_onehot_val = to_categorical(y_val)
+# model = build_model(len(labels))
+# hist = learn_model(model, X_train, y_onehot_train, X_val, y_onehot_val)
+
+# plot_evaluation(hist.history, 'loss', 'val_loss', 'loss', f'../figure/loss_inception_pokemon')
+# plot_evaluation(hist.history, 'accuracy', 'val_accuracy', 'accuracy', f'../figure/acc_inception_pokemon')
+
+# y_pred = predict_model(model, pokemon)
+# y_pred = np.argmax(y_pred, axis=1)
+
+# # %%
+# model.save('../model/inception.h5')
+# del model
+# model = load_model('../model/base.h5')
 
 # %%
-# ユニークラベル
-flowers_labels = [re.split('[\\\.]',path)[-1] for path in gb.glob('D:/OpenData/flowers/raw/*')]
-flowers_labels
+# ポケモンが何に分類されるかでアサイン
+model_base = load_model('../model/base.h5')
+model_inception = load_model('../model/inception.h5')
+pred_base = predict_model(model_base, pokemon)
+pred_inception = predict_model(model_inception, pokemon)
+pred_base = np.argmax(pred_base, axis=1)
+pred_inception = np.argmax(pred_inception, axis=1)
+
+print(pred_base.shape)
+print(pred_inception.shape)
 # %%
-fruit_vegetable_labels = [re.split('[\\\.]',path)[-1] for path in gb.glob('D:/OpenData/Fruit-and-Vegetable-Image-Recognition/train/*')]
-fruit_vegetable_labels
-# %%
-labels = flowers_labels + fruit_vegetable_labels
-print(len(labels))
-labels
+pokemon_df = pd.DataFrame()
+pokemon_df['sinnoh_pokemon'] = sinnoh_pokemon_list
+pokemon_df['pred_base'] = pred_base
+pokemon_df['pred_inception'] = pred_inception
+pokemon_df
 
 # %%
-# データ準備
-X, y = make_dataset(daisy, dandelion, rose, sunflower, tulip, fruit_vegetable, fruit_vegetable_labels)
-print(X.shape)
-print(y.shape)
-# %%
-# %%time
-# run_cv(X, y, labels)
-
-
-# %%
-joblib.dump(model, 'model/base.model', compress=True)
+pokemon_df.to_csv('../data/result.csv', index=False)
 
 # %%
 print(device_lib.list_local_devices())
