@@ -248,7 +248,7 @@ def extract_sinnoh(pokemon_path_list):
 # %%
 pokemon_path_list = gb.glob('D:/OpenData/pokemon_dataset/Pokemon-Images-Dataset/pokemon/*')
 sinnoh_pokemon_list = extract_sinnoh(pokemon_path_list)
-sinnoh_pokemon_list.shape
+sinnoh_pokemon_list
 
 # # %%
 # # 花
@@ -285,7 +285,7 @@ sinnoh_pokemon_list.shape
 # print(X.shape)
 # print(y.shape)
 # # %%
-# X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.25, shuffle=True, random_state=2021)
+# X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.20, shuffle=True, random_state=2021)
 
 # # %%time
 # # run_cv(X, y, labels)
@@ -305,8 +305,8 @@ sinnoh_pokemon_list.shape
 
 # # %%
 # model.save('../model/inception.h5')
-# del model
-# model = load_model('../model/base.h5')
+# # del model
+# # model = load_model('../model/base.h5')
 
 # %%
 # ポケモンが何に分類されるかでアサイン
@@ -331,3 +331,4 @@ pokemon_df.to_csv('../data/result.csv', index=False)
 
 # %%
 print(device_lib.list_local_devices())
+# %%
