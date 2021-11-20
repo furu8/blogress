@@ -41,3 +41,4 @@ df
 # %%
 df.drop(['pred_base', 'pred_inception', 'number'], axis=1)
 # %%
+df.to_csv('../data/final.csv', index=False)
