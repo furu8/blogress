@@ -39,6 +39,7 @@ sinnoh_df
 df = pd.merge(df, sinnoh_df, left_on='sinnoh_pokemon', right_on='number').drop(columns='sinnoh_pokemon')
 df
 # %%
-df.drop(['pred_base', 'pred_inception', 'number'], axis=1)
+df = df.drop(['pred_base', 'pred_inception', 'number'], axis=1)
+df
 # %%
 df.to_csv('../data/final.csv', index=False)
